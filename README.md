@@ -6,4 +6,4 @@
 
 &&
 
-`java -cp build com.alexisdrai.Main`
+`java -cp build com.alexisdrai.connect4.Main`
