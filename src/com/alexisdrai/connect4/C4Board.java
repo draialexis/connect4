@@ -24,7 +24,7 @@ public class C4Board
 {
     private static final int     WIDTH   = 7;
     private static final int     HEIGHT  = 6;
-    private static       Scanner scanner = new Scanner(System.in);
+    private static final Scanner scanner = new Scanner(System.in);
 
     private final int[] topFreeSlots = new int[WIDTH];
 
@@ -32,14 +32,11 @@ public class C4Board
 
     private final Slot[][] slots;
 
-    private int botCount;
-
     C4Board()
     {
         // registering all players
-        this.botCount = 0;
+        int botCount = 0;
         this.players = new EnumMap<>(Color.class);
-        scanner.useDelimiter(System.lineSeparator());
 
         for (Color color : Color.values())
         {
@@ -57,8 +54,8 @@ public class C4Board
 
             if (name.equals("bot"))
             {
-                this.botCount++;
-                this.players.put(color, new C4Player_CPU(name + "_" + this.botCount, color));
+                botCount++;
+                this.players.put(color, new C4Player_CPU(name + "_" + botCount, color));
             }
             else
             {
@@ -91,11 +88,11 @@ public class C4Board
     {
         if (!(0 <= columnIdx && columnIdx < WIDTH))
         {
-            throw new IllegalArgumentException("column not part of the board");
+            throw new IllegalArgumentException("column not part of the board\nchooseColumn should have prevented this");
         }
-        if (this.topFreeSlots[columnIdx] <= 0)
+        if (this.topFreeSlots[columnIdx] < 0)
         {
-            throw new IllegalStateException("column is already full");
+            throw new IllegalStateException("column is already full\nchooseColumn should have prevented this");
         }
 
         int row = this.topFreeSlots[columnIdx];
@@ -118,20 +115,17 @@ public class C4Board
     */
 
     /**
-     * the sequence of actions that make up a turn
+     * runs the sequence of actions that make up a turn
      */
-    void play()
+    void playTurn()
     {
         for (C4Player player : this.players.values())
         {
-            if (Arrays.stream(this.topFreeSlots).sum() == (HEIGHT - 1) * WIDTH) // turn 1
-            {
-                this.displayBoard();
-            }
+
+            this.displayBoard();
             int columnIdx = player.chooseColumn();
             this.takeMove(columnIdx, player);
-            this.displayBoard();
-            // TODO interrupt game if win
+            // TODO interrupt game if win, displayboard before interrupt
         }
     }
 
@@ -216,13 +210,23 @@ public class C4Board
         int chooseColumn()
         {
             int column = -1;
-            System.out.println(
-                    this.getName() + " (" + this.getColor() + "): Please choose a column between 1 and " + WIDTH
-            );
 
-            while (1 > column || column > WIDTH)
+            while (column < 1 || WIDTH < column || topFreeSlots[column - 1] < 0)
             {
-                column = scanner.nextInt();
+                System.out.printf("%s (%s): Please choose a non-full column between 1 and %d%n",
+                                  this.getName(),
+                                  this.getColor(),
+                                  WIDTH);
+                try
+                {
+                    column = scanner.nextInt();
+                } catch (Exception ignored)
+                {
+                    if (scanner.hasNextLine())
+                    {
+                        scanner.nextLine();
+                    }
+                }
             }
 
             return column - 1; // the index of said column
