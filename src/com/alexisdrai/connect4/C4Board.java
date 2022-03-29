@@ -1,80 +1,160 @@
 package com.alexisdrai.connect4;
 
-import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Optional;
 
+/**
+ * a Connect-4 board.
+ * <br>rows are numbered from 0 to HEIGHT-1, from top to bottom.
+ * <br>columns are numbered from 0 to WIDTH-1, from left to right.
+ *
+ * <table>
+ * <tr> <td>.</td></th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th> </tr>
+ * <tr> <th>0</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
+ * <tr> <th>1</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
+ * <tr> <th>2</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
+ * <tr> <th>3</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
+ * <tr> <th>4</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
+ * <tr> <th>5</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
+ * </table>
+ */
 public class C4Board
 {
-    private static final int WIDTH     = 7;
-    private static final int HEIGHT    = 6;
-    private static final int NUM_SLOTS = WIDTH * HEIGHT;
+    private static final int     WIDTH   = 7;
+    private static final int     HEIGHT  = 6;
+    private static       Scanner scanner = new Scanner(System.in);
 
-    private final int[] topFreeSlots = new int[NUM_SLOTS];
+    private final int[] topFreeSlots = new int[WIDTH];
 
-    private final ArrayList<ArrayList<Slot>> slots;
+    private final EnumMap<Color, C4Player> players;
+
+    private final Slot[][] slots;
+
+    private int botCount;
 
     C4Board()
     {
-        // rows are numbered 0->HEIGHT-1 starting from top
+        // registering all players
+        this.botCount = 0;
+        this.players = new EnumMap<>(Color.class);
+        scanner.useDelimiter(System.lineSeparator());
+
+        for (Color color : Color.values())
+        {
+            String name = null;
+
+            while (name == null || name.equals(""))
+            {
+                System.out.println("Who shall play " + color + "?");
+                System.out.println("Please enter your name, or \"bot\" (in lowercase) to assign them " + color);
+                if (scanner.hasNextLine())
+                {
+                    name = scanner.nextLine();
+                }
+            }
+
+            if (name.equals("bot"))
+            {
+                this.botCount++;
+                this.players.put(color, new C4Player_CPU(name + "_" + this.botCount, color));
+            }
+            else
+            {
+                this.players.put(color, new C4Player(name, color));
+            }
+        }
+        // marking all the bottom slots as free
         Arrays.fill(this.topFreeSlots, HEIGHT - 1);
 
-        this.slots = new ArrayList<>(HEIGHT);
+        // putting the board itself together
+        this.slots = new Slot[HEIGHT][];
         for (int i = 0; i < HEIGHT; i++)
         {
-            this.slots.set(i, new ArrayList<>(WIDTH));
+            this.slots[i] = new Slot[WIDTH];
             for (int j = 0; j < WIDTH; j++)
             {
-                this.slots.get(i).set(j, new Slot());
+                this.slots[i][j] = new Slot();
             }
         }
+
+        // registering neighbors
+        // TODO ^
     }
 
-    int insertCoin(int column, int playerNum)
+    /**
+     * @param columnIdx must be between 0 and {@link C4Board#WIDTH} - 1
+     * @param player
+     */
+    void takeMove(int columnIdx, C4Player player)
     {
-        if (!(0 <= column && column < WIDTH))
+        if (!(0 <= columnIdx && columnIdx < WIDTH))
         {
-            System.out.println("column not part of the board");
-            // TODO make proper exception
-            // maybe use a try-catch in the Main?
+            throw new IllegalArgumentException("column not part of the board");
         }
-        if (this.topFreeSlots[column] <= 0)
+        if (this.topFreeSlots[columnIdx] <= 0)
         {
-            System.out.println("column is already full");
-            // TODO make proper exception
-            // maybe use a try-catch in the Main?
+            throw new IllegalStateException("column is already full");
         }
-        int row = this.gravity();
-        if (this.hasNeighbors(column, row))
-        {
-            if (this.hasWon(column, row))
-            {
-                return playerNum;
-            }
-        }
-        this.topFreeSlots[column]--;
-        return 0;
+
+        int row = this.topFreeSlots[columnIdx];
+        this.slots[row][columnIdx].setColor(player.getColor());
+
+        this.topFreeSlots[columnIdx]--;
     }
 
+
+    /*
     boolean hasWon(int column, int row)
     {
         return (
-                this.hHasWon(column, row)          //   ←   (-)     →
-                || this.vHasWon(column, row)       //   ↑   (|)     ↓
-                || this.fwdDiagHasWon(column, row) //   ←↓  (/)     ↑→
-                || this.bckDiagHasWon(column, row) //   ←↑  (\)     ↓→
+                this.isHorizWin(column, row)            //   l   (-)     r
+                || this.isVertWin(column, row)          //   u   (|)     d
+                || this.isFwdDiagWin(column, row)       //   ld  (/)     ur
+                || this.isBackDiagWin(column, row)      //   lu  (\)     dr
         );
     }
+    */
 
-    boolean hasNeighbors(int column, int row)
+    /**
+     * the sequence of actions that make up a turn
+     */
+    void play()
     {
-        return false;
+        for (C4Player player : this.players.values())
+        {
+            if (Arrays.stream(this.topFreeSlots).sum() == (HEIGHT - 1) * WIDTH) // turn 1
+            {
+                this.displayBoard();
+            }
+            int columnIdx = player.chooseColumn();
+            this.takeMove(columnIdx, player);
+            this.displayBoard();
+            // TODO interrupt game if win
+        }
     }
 
-    int play()
+    void displayBoard()
     {
-        return 1; // return winning player number
+        for (int i = 0; i < HEIGHT; i++)
+        {
+            for (int j = 0; j < WIDTH; j++)
+            {
+                System.out.print(" ");
+                Optional<Color> color = this.slots[i][j].getColor();
+                if (color.isEmpty())
+                {
+                    System.out.print("O");
+                }
+                else
+                {
+                    color.ifPresent(clr -> System.out.print("" + (clr == Color.RED ? "@" : "X")));
+                    //TODO update with colors
+                }
+            }
+            System.out.println();
+        }
     }
 
     /**
@@ -96,9 +176,9 @@ public class C4Board
             this.neighbors.put(Direction.LEFT, null);
         }
 
-        Color getColor()
+        Optional<Color> getColor()
         {
-            return this.color;
+            return Optional.ofNullable(this.color);
         }
 
         void setColor(Color color)
@@ -108,7 +188,59 @@ public class C4Board
 
         Optional<Color> getNeighbor(Direction direction)
         {
-            return Optional.ofNullable(neighbors.get(direction));
+            return Optional.ofNullable(this.neighbors.get(direction));
+        }
+    }
+
+    private class C4Player
+    {
+        private final String name;
+        private final Color  color;
+
+        C4Player(String name, Color color)
+        {
+            this.name = name;
+            this.color = color;
+        }
+
+        String getName()
+        {
+            return this.name;
+        }
+
+        Color getColor()
+        {
+            return this.color;
+        }
+
+        int chooseColumn()
+        {
+            int column = -1;
+            System.out.println(
+                    this.getName() + " (" + this.getColor() + "): Please choose a column between 1 and " + WIDTH
+            );
+
+            while (1 > column || column > WIDTH)
+            {
+                column = scanner.nextInt();
+            }
+
+            return column - 1; // the index of said column
+        }
+    }
+
+    private class C4Player_CPU extends C4Player
+    {
+        C4Player_CPU(String name, Color color)
+        {
+            super(name, color);
+        }
+
+        @Override
+        int chooseColumn()
+        {
+            // TODO this
+            return super.chooseColumn();
         }
     }
 

@@ -2,7 +2,7 @@
 
 ## Compilation and execution
 
-`javac -Xlint:all -d build src/com/alexisdrai/connect4/*.java src/com/alexisdrai/util/*.java`
+`javac -Xlint:all -d build src/com/alexisdrai/connect4/*.java`
 
 &&
 
