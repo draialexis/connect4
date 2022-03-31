@@ -201,7 +201,7 @@ public class C4Board
         }
         if (this.topFreeCells[columnIdx] < 0)
         {
-            throw new IllegalStateException("column is already full\nchooseColumn should have prevented this");
+            throw new FullColumnException(columnIdx);
         }
 
         int row = this.topFreeCells[columnIdx];
@@ -335,5 +335,23 @@ public class C4Board
     private enum Direction
     {
         TOP, RIGHT, BOTTOM, LEFT
+    }
+
+    private static class FullColumnException extends IllegalArgumentException
+    {
+        FullColumnException(int columnIdx)
+        {
+            super(String.format("column at index %d is already full -- chooseMove() should have prevented this",
+                                columnIdx));
+        }
+    }
+
+    private static class OutOfBoardException extends IllegalArgumentException
+    {
+        OutOfBoardException(int columnIdx)
+        {
+            super(String.format("column %d not part of the board\nchooseColumn should have prevented this",
+                                columnIdx));
+        }
     }
 }
