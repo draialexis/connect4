@@ -78,7 +78,6 @@ public class C4Board
 
     private void resetBoard()
     {
-
         // putting the board itself together
         for (int i = 0; i < TTL_ROWS; i++)
         {
@@ -138,7 +137,7 @@ public class C4Board
         return Arrays.stream(topFreeCells).sum() == -1 * TTL_COLS;
     }
 
-    private void Win()
+    private void win()
     {
         this.isWon = true;
     }
@@ -184,23 +183,19 @@ public class C4Board
                 else
                 {
                     color.ifPresent(clr -> System.out.print("" + (clr == Color.RED ? "@" : "X")));
-                    //TODO update with colors
                 }
             }
             System.out.println();
         }
     }
 
-    /**
-     * @param player
-     */
     void registerMove(C4Player player)
     {
         int columnIdx = Objects.requireNonNull(player).chooseMove();
 
         if (!(0 <= columnIdx && columnIdx < TTL_COLS))
         {
-            throw new IllegalArgumentException("column not part of the board\nchooseColumn should have prevented this");
+            throw new OutOfBoardException(columnIdx);
         }
         if (this.topFreeCells[columnIdx] < 0)
         {
@@ -211,7 +206,6 @@ public class C4Board
         this.cells[row][columnIdx].setColor(player.getColor());
 
         this.check(this.cells[row][columnIdx]);
-
         this.topFreeCells[columnIdx]--;
     }
 
@@ -221,6 +215,7 @@ public class C4Board
         // this.Win()
     }
 
+    // TODO make static? check baeldung
     /**
      * represents a cell in a Connect-4 board
      */
@@ -320,7 +315,6 @@ public class C4Board
         @Override
         int chooseMove()
         {
-            // TODO this
             return super.chooseMove();
         }
     }
