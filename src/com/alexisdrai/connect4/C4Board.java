@@ -105,16 +105,9 @@ public class C4Board
         Arrays.fill(this.topFreeCells, TTL_ROWS - 1);
     }
 
-
-    /*
-    boolean hasWon(int column, int row)
+    private boolean isFull()
     {
-        return (
-                this.isHorizWin(column, row)            //   l   (-)     r
-                || this.isVertWin(column, row)          //   u   (|)     d
-                || this.isFwdDiagWin(column, row)       //   ld  (/)     ur
-                || this.isBackDiagWin(column, row)      //   lu  (\)     dr
-        );
+        return Arrays.stream(topFreeCells).sum() == -1 * TTL_COLS;
     }
 
     /**
