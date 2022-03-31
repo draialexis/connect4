@@ -4,6 +4,7 @@ import java.util.Scanner;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Optional;
+import java.util.Objects;
 
 /**
  * a Connect-4 board.
@@ -82,23 +83,44 @@ public class C4Board
             }
         }
 
-        // registering neighbors
-        // TODO ^
-    }
-
-    /**
-     * @param columnIdx must be between 0 and {@link C4Board#WIDTH} - 1
-     * @param player
-     */
-    void takeMove(int columnIdx, C4Player player)
-    {
-        if (!(0 <= columnIdx && columnIdx < WIDTH))
+        //registering neighbors
+        for (int i = 0; i < TTL_ROWS; i++)
         {
-            throw new IllegalArgumentException("column not part of the board\nchooseColumn should have prevented this");
-        }
-        if (this.topFreeCells[columnIdx] < 0)
-        {
-            throw new IllegalStateException("column is already full\nchooseColumn should have prevented this");
+            for (int j = 0; j < TTL_COLS; j++)
+            {
+                if (i > 0)
+                {
+                    // not top row => add upper neighbors
+                    this.cells[i][j].setNeighbor(
+                            Direction.TOP,
+                            this.cells[i - 1][j]
+                    );
+                }
+                if (j < TTL_COLS - 1)
+                {
+                    // not rightmost col => add right neighbors
+                    this.cells[i][j].setNeighbor(
+                            Direction.RIGHT,
+                            this.cells[i][j + 1]
+                    );
+                }
+                if (i < TTL_ROWS - 1)
+                {
+                    // not bottom row => add lower neighbors
+                    this.cells[i][j].setNeighbor(
+                            Direction.BOTTOM,
+                            this.cells[i + 1][j]
+                    );
+                }
+                if (j > 0)
+                {
+                    // not leftmost col => add left neighbors
+                    this.cells[i][j].setNeighbor(
+                            Direction.LEFT,
+                            this.cells[i][j - 1]
+                    );
+                }
+            }
         }
 
         // marking all the bottom cells as free
@@ -212,6 +234,13 @@ public class C4Board
         Optional<Cell> getNeighbor(Direction direction)
         {
             return Optional.ofNullable(this.neighbors.get(direction));
+        }
+
+        void setNeighbor(Direction direction, Cell cell)
+        {
+            Objects.requireNonNull(direction);
+            Objects.requireNonNull(cell);
+            this.neighbors.put(direction, cell);
         }
     }
 
