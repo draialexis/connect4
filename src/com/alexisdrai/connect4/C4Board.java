@@ -207,21 +207,16 @@ public class C4Board
         int row = this.topFreeCells[columnIdx];
         this.cells[row][columnIdx].setColor(player.getColor());
 
+        this.check(this.cells[row][columnIdx]);
+
         this.topFreeCells[columnIdx]--;
     }
 
-
-    /*
-    boolean hasWon(int column, int row)
+    private void check(Cell cell)
     {
-        return (
-                this.isHorizWin(column, row)            //   l   (-)     r
-                || this.isVertWin(column, row)          //   u   (|)     d
-                || this.isFwdDiagWin(column, row)       //   ld  (/)     ur
-                || this.isBackDiagWin(column, row)      //   lu  (\)     dr
-        );
+        // TODO
+        // this.Win()
     }
-    */
 
     /**
      * represents a cell in a Connect-4 board
