@@ -26,11 +26,11 @@ public class C4Board
     private static final int     HEIGHT  = 6;
     private static final Scanner scanner = new Scanner(System.in);
 
-    private final int[] topFreeSlots = new int[WIDTH];
+    private final int[] topFreeCells = new int[WIDTH];
 
     private final EnumMap<Color, C4Player> players;
 
-    private final Slot[][] slots;
+    private final Cell[][] cells;
 
     C4Board()
     {
@@ -62,17 +62,17 @@ public class C4Board
                 this.players.put(color, new C4Player(name, color));
             }
         }
-        // marking all the bottom slots as free
-        Arrays.fill(this.topFreeSlots, HEIGHT - 1);
+        // marking all the bottom cells as free
+        Arrays.fill(this.topFreeCells, HEIGHT - 1);
 
         // putting the board itself together
-        this.slots = new Slot[HEIGHT][];
+        this.cells = new Cell[HEIGHT][];
         for (int i = 0; i < HEIGHT; i++)
         {
-            this.slots[i] = new Slot[WIDTH];
+            this.cells[i] = new Cell[WIDTH];
             for (int j = 0; j < WIDTH; j++)
             {
-                this.slots[i][j] = new Slot();
+                this.cells[i][j] = new Cell();
             }
         }
 
@@ -90,15 +90,15 @@ public class C4Board
         {
             throw new IllegalArgumentException("column not part of the board\nchooseColumn should have prevented this");
         }
-        if (this.topFreeSlots[columnIdx] < 0)
+        if (this.topFreeCells[columnIdx] < 0)
         {
             throw new IllegalStateException("column is already full\nchooseColumn should have prevented this");
         }
 
-        int row = this.topFreeSlots[columnIdx];
-        this.slots[row][columnIdx].setColor(player.getColor());
+        int row = this.topFreeCells[columnIdx];
+        this.cells[row][columnIdx].setColor(player.getColor());
 
-        this.topFreeSlots[columnIdx]--;
+        this.topFreeCells[columnIdx]--;
     }
 
 
@@ -136,7 +136,7 @@ public class C4Board
             for (int j = 0; j < WIDTH; j++)
             {
                 System.out.print(" ");
-                Optional<Color> color = this.slots[i][j].getColor();
+                Optional<Color> color = this.cells[i][j].getColor();
                 if (color.isEmpty())
                 {
                     System.out.print("O");
@@ -152,15 +152,15 @@ public class C4Board
     }
 
     /**
-     * represents a slot in a Connect-4 board
+     * represents a cell in a Connect-4 board
      */
-    private class Slot
+    private class Cell
     {
         private final EnumMap<Direction, Color> neighbors;
 
         private Color color;
 
-        Slot()
+        Cell()
         {
             this.color = null;
             this.neighbors = new EnumMap<>(Direction.class);
@@ -211,7 +211,7 @@ public class C4Board
         {
             int column = -1;
 
-            while (column < 1 || WIDTH < column || topFreeSlots[column - 1] < 0)
+            while (column < 1 || WIDTH < column || topFreeCells[column - 1] < 0)
             {
                 System.out.printf("%s (%s): Please choose a non-full column between 1 and %d%n",
                                   this.getName(),
