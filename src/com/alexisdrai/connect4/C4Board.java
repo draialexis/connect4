@@ -23,17 +23,18 @@ import java.util.Objects;
  */
 public class C4Board
 {
-    private static final int TTL_COLS = 7;
-    private static final int TTL_ROWS = 6;
+    private static final int TTL_COLS    = 7;
+    private static final int TTL_ROWS    = 6;
+    private static final int TTL_PLAYERS = 2;
 
     private static final Scanner scanner = new Scanner(System.in);
 
     /**
      * an array of the indices of the topmost free cell of each column
      */
-    private final int[]                    topFreeCells = new int[TTL_COLS];
-    private final EnumMap<Color, C4Player> players      = new EnumMap<>(Color.class);
-    private final Cell[][]                 cells        = new Cell[TTL_ROWS][];
+    private final int[]      topFreeCells = new int[TTL_COLS];
+    private final C4Player[] players      = new C4Player[TTL_PLAYERS];
+    private final Cell[][]   cells        = new Cell[TTL_ROWS][];
 
     private boolean isWon;
 
@@ -47,6 +48,7 @@ public class C4Board
     private void assignPlayers()
     {
         int botCount = 0;
+        int allCount = 0;
         for (Color color : Color.values())
         {
             String name = null;
@@ -64,12 +66,13 @@ public class C4Board
             if (name.equals("bot"))
             {
                 botCount++;
-                this.players.put(color, new C4Player_CPU(name + "_" + botCount, color));
+                this.players[allCount] = new C4Player_CPU(name + "_" + botCount, color);
             }
             else
             {
-                this.players.put(color, new C4Player(name, color));
+                this.players[allCount] = new C4Player(name, color);
             }
+            allCount++;
         }
     }
 
@@ -150,7 +153,7 @@ public class C4Board
      */
     public boolean playTurn()
     {
-        for (C4Player player : this.players.values())
+        for (C4Player player : this.players)
         {
             this.displayBoard();
             this.registerMove(player);
