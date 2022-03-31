@@ -155,7 +155,7 @@ public class C4Board
         for (C4Player player : this.players)
         {
             this.displayBoard();
-            this.registerMove(player);
+            this.registerMove(Objects.requireNonNull(player));
             if (this.isWon() || this.isFull())
             {
                 System.out.print("~~~~~~~~~~~~~~ Game over ~~~~~~~~~~~~~~\n"
@@ -203,16 +203,23 @@ public class C4Board
         }
 
         int row = this.topFreeCells[columnIdx];
-        this.cells[row][columnIdx].setColor(player.getColor());
-
+        this.cells[row][columnIdx].setColor(Objects.requireNonNull(player.getColor()));
         this.check(this.cells[row][columnIdx]);
         this.topFreeCells[columnIdx]--;
     }
 
     private void check(Cell cell)
     {
-        // TODO
-        // this.Win()
+        if (this.aligned(Objects.requireNonNull(cell)) >= 4)
+        {
+            this.win();
+        }
+    }
+
+    private int aligned(Cell cell)
+    {
+        Objects.requireNonNull(cell);
+        return 0;
     }
 
     // TODO make static? check baeldung
@@ -242,7 +249,7 @@ public class C4Board
 
         void setColor(Color color)
         {
-            this.color = color;
+            this.color = Objects.requireNonNull(color);
         }
 
         Optional<Cell> getNeighbor(Direction direction)
@@ -252,9 +259,7 @@ public class C4Board
 
         void setNeighbor(Direction direction, Cell cell)
         {
-            Objects.requireNonNull(direction);
-            Objects.requireNonNull(cell);
-            this.neighbors.put(direction, cell);
+            this.neighbors.put(Objects.requireNonNull(direction), Objects.requireNonNull(cell));
         }
     }
 
@@ -265,8 +270,8 @@ public class C4Board
 
         C4Player(String name, Color color)
         {
-            this.name = name;
-            this.color = color;
+            this.name = Objects.requireNonNull(name);
+            this.color = Objects.requireNonNull(color);
         }
 
         String getName()
