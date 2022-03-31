@@ -35,8 +35,11 @@ public class C4Board
     private final EnumMap<Color, C4Player> players      = new EnumMap<>(Color.class);
     private final Cell[][]                 cells        = new Cell[TTL_ROWS][];
 
+    private boolean isWon;
+
     C4Board()
     {
+        isWon = false;
         assignPlayers();
         resetBoard();
     }
@@ -132,17 +135,35 @@ public class C4Board
         return Arrays.stream(topFreeCells).sum() == -1 * TTL_COLS;
     }
 
+    private void Win()
+    {
+        this.isWon = true;
+    }
+
+    boolean isWon()
+    {
+        return this.isWon;
+    }
+
     /**
      * runs the sequence of actions that make up a turn
      */
-    void playTurn()
+    public boolean playTurn()
     {
         for (C4Player player : this.players.values())
         {
             this.displayBoard();
             this.registerMove(player);
-            // TODO interrupt game if win, displayboard before interrupt
+            if (this.isWon() || this.isFull())
+            {
+                System.out.print("~~~~~~~~~~~~~~ Game over ~~~~~~~~~~~~~~\n"
+                                 + player.getName() + " wins");
+                //TODO use player.getColor() to display name in specific color
+                this.displayBoard();
+                return true;
+            }
         }
+        return false;
     }
 
     void displayBoard()

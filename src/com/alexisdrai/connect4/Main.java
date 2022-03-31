@@ -5,10 +5,11 @@ public class Main
     public static void main(String[] args)
     {
         C4Board board = new C4Board();
-
-        while (true)
+        boolean isOver = false;
+        while (!isOver)
         {
-            board.playTurn();
+            isOver = board.playTurn();
         }
+        System.out.println("Thanks for playing!");
     }
 }
