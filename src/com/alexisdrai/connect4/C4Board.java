@@ -158,9 +158,12 @@ public class C4Board
             this.registerMove(Objects.requireNonNull(player));
             if (this.isWon() || this.isFull())
             {
-                System.out.print("~~~~~~~~~~~~~~ Game over ~~~~~~~~~~~~~~\n"
-                                 + player.getName() + " wins");
-                //TODO use player.getColor() to display name in specific color
+                System.out.println("~~~~~~~~~~~~~~ Game over ~~~~~~~~~~~~~~");
+                if (this.isWon())
+                {
+                    System.out.println(player.getName() + " wins");
+                    //TODO use player.getColor() to display name in specific color
+                }
                 this.displayBoard();
                 return true;
             }
