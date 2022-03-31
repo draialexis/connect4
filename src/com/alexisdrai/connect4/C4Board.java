@@ -156,7 +156,7 @@ public class C4Board
      */
     private class Cell
     {
-        private final EnumMap<Direction, Color> neighbors;
+        private final EnumMap<Direction, Cell> neighbors;
 
         private Color color;
 
@@ -180,7 +180,7 @@ public class C4Board
             this.color = color;
         }
 
-        Optional<Color> getNeighbor(Direction direction)
+        Optional<Cell> getNeighbor(Direction direction)
         {
             return Optional.ofNullable(this.neighbors.get(direction));
         }
