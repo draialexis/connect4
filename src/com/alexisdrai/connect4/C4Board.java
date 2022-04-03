@@ -107,7 +107,7 @@ public class C4Board
                 {
                     // not top row => add upper neighbors
                     this.board[i][j].setNeighbor(
-                            Direction.TOP,
+                            Direction.UP,
                             this.board[i - 1][j]
                     );
                 }
@@ -123,7 +123,7 @@ public class C4Board
                 {
                     // not bottom row => add lower neighbors
                     this.board[i][j].setNeighbor(
-                            Direction.BOTTOM,
+                            Direction.DOWN,
                             this.board[i + 1][j]
                     );
                 }
@@ -246,22 +246,22 @@ public class C4Board
     {
         int[] alignments = new int[4]; // {0, 0, 0, 0};
 
-        alignments[0] = alignedStraight(upOrigin(cell, color), color, Direction.BOTTOM);                      // '|'
-        alignments[1] = alignedDiag(topLeftOrigin(cell, color), color, Direction.RIGHT, Direction.BOTTOM);    // '\'
+        alignments[0] = alignedStraight(upOrigin(cell, color), color, Direction.DOWN);                      // '|'
+        alignments[1] = alignedDiag(topLeftOrigin(cell, color), color, Direction.RIGHT, Direction.DOWN);    // '\'
         alignments[2] = alignedStraight(leftOrigin(cell, color), color, Direction.RIGHT);                   // '-'
-        alignments[3] = alignedDiag(bottomLeftOrigin(cell, color), color, Direction.RIGHT, Direction.TOP);   // '/'
+        alignments[3] = alignedDiag(bottomLeftOrigin(cell, color), color, Direction.RIGHT, Direction.UP);   // '/'
 
         return Arrays.stream(alignments).max();
     }
 
     private Cell upOrigin(Cell cell, Color color)
     {
-        return this.straightOrigin(cell, color, Direction.TOP);
+        return this.straightOrigin(cell, color, Direction.UP);
     }
 
     private Cell topLeftOrigin(Cell cell, Color color)
     {
-        return this.diagOrigin(cell, color, Direction.LEFT, Direction.TOP);
+        return this.diagOrigin(cell, color, Direction.LEFT, Direction.UP);
     }
 
     private Cell leftOrigin(Cell cell, Color color)
@@ -271,13 +271,13 @@ public class C4Board
 
     private Cell bottomLeftOrigin(Cell cell, Color color)
     {
-        return this.diagOrigin(cell, color, Direction.LEFT, Direction.BOTTOM);
+        return this.diagOrigin(cell, color, Direction.LEFT, Direction.DOWN);
     }
 
     private Cell diagOrigin(Cell cell, Color color, Direction leftRight, Direction upDown)
     {
         if (Objects.requireNonNull(upDown) == Direction.LEFT || upDown == Direction.RIGHT
-            || Objects.requireNonNull(leftRight) == Direction.TOP || leftRight == Direction.BOTTOM)
+            || Objects.requireNonNull(leftRight) == Direction.UP || leftRight == Direction.DOWN)
         {
             throw new InvalidDiagonalException(leftRight, upDown);
         }
@@ -344,9 +344,9 @@ public class C4Board
         {
             this.color = null;
             this.neighbors = new EnumMap<>(Direction.class);
-            this.neighbors.put(Direction.TOP, null);
+            this.neighbors.put(Direction.UP, null);
             this.neighbors.put(Direction.RIGHT, null);
-            this.neighbors.put(Direction.BOTTOM, null);
+            this.neighbors.put(Direction.DOWN, null);
             this.neighbors.put(Direction.LEFT, null);
         }
 
@@ -462,7 +462,7 @@ public class C4Board
 
     private enum Direction
     {
-        TOP, RIGHT, BOTTOM, LEFT
+        UP, RIGHT, DOWN, LEFT
     }
 
     private static class FullColumnException extends IllegalArgumentException
