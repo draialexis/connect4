@@ -314,7 +314,7 @@ public class C4Board
     /**
      * represents a cell in a Connect-4 board
      */
-    private class Cell
+    private static class Cell
     {
         private final EnumMap<Direction, Cell> neighbors;
 
