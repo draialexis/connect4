@@ -3,7 +3,7 @@ package com.alexisdrai.connect4;
 import java.util.Scanner;
 import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Objects;
 
 /**
@@ -134,7 +134,7 @@ public class C4Board
 
     private boolean isFull()
     {
-        return Arrays.stream(topFreeCells).sum() == -1 * TTL_COLS;
+        return Arrays.stream(topFreeCells).sum() == -1 * TTL_COLS; // column i is full => topFreeCells[i] = -1
     }
 
     private void win()
@@ -171,28 +171,28 @@ public class C4Board
         return false;
     }
 
-    void displayBoard()
+    private void displayBoard()
     {
         for (int i = 0; i < TTL_ROWS; i++)
         {
             for (int j = 0; j < TTL_COLS; j++)
             {
                 System.out.print(" ");
-                Optional<Color> color = this.cells[i][j].getColor();
-                if (color.isEmpty())
+                Color color = this.cells[i][j].getColor();
+                if (color == null)
                 {
                     System.out.print("O");
                 }
                 else
                 {
-                    color.ifPresent(clr -> System.out.print("" + (clr == Color.RED ? "@" : "X")));
+                    System.out.print("" + (color == Color.RED ? "@" : "X"));
                 }
             }
             System.out.println();
         }
     }
 
-    void registerMove(C4Player player)
+    private void registerMove(C4Player player)
     {
         int columnIdx = Objects.requireNonNull(player).chooseMove();
 
@@ -206,26 +206,111 @@ public class C4Board
         }
 
         int row = this.topFreeCells[columnIdx];
-        this.cells[row][columnIdx].setColor(Objects.requireNonNull(player.getColor()));
-        this.check(this.cells[row][columnIdx]);
+        this.cells[row][columnIdx].setColor(player.getColor());
+        this.check(this.cells[row][columnIdx], player.getColor());
         this.topFreeCells[columnIdx]--;
     }
 
-    private void check(Cell cell)
+    private void check(Cell cell, Color color)
     {
-        if (this.aligned(Objects.requireNonNull(cell)) >= 4)
+        OptionalInt optAlignment = this.aligned(Objects.requireNonNull(cell), color);
+        optAlignment.ifPresent(alignment -> {
+            if (alignment >= 4)
+            {
+                this.win();
+            }
+        });
+    }
+
+    private OptionalInt aligned(Cell cell, Color color)
+    {
+        int[] alignments = new int[4]; // {0, 0, 0, 0};
+
+        alignments[0] = alignedStraight(upOrigin(cell, color), color, Direction.BOTTOM);                      // '|'
+        alignments[1] = alignedDiag(topLeftOrigin(cell, color), color, Direction.RIGHT, Direction.BOTTOM);    // '\'
+        alignments[2] = alignedStraight(leftOrigin(cell, color), color, Direction.RIGHT);                   // '-'
+        alignments[3] = alignedDiag(bottomLeftOrigin(cell, color), color, Direction.RIGHT, Direction.TOP);   // '/'
+
+        return Arrays.stream(alignments).max();
+    }
+
+    private Cell upOrigin(Cell cell, Color color)
+    {
+        return this.straightOrigin(cell, color, Direction.TOP);
+    }
+
+    private Cell topLeftOrigin(Cell cell, Color color)
+    {
+        return this.diagOrigin(cell, color, Direction.LEFT, Direction.TOP);
+    }
+
+    private Cell leftOrigin(Cell cell, Color color)
+    {
+        return this.straightOrigin(cell, color, Direction.LEFT);
+    }
+
+    private Cell bottomLeftOrigin(Cell cell, Color color)
+    {
+        return this.diagOrigin(cell, color, Direction.LEFT, Direction.BOTTOM);
+    }
+
+    private Cell diagOrigin(Cell cell, Color color, Direction leftRight, Direction upDown)
+    {
+        if (Objects.requireNonNull(upDown) == Direction.LEFT || upDown == Direction.RIGHT
+            || Objects.requireNonNull(leftRight) == Direction.TOP || leftRight == Direction.BOTTOM)
         {
-            this.win();
+            throw new InvalidDiagonalException(leftRight, upDown);
         }
+
+        Cell halfNext = cell.getNeighbor(leftRight);
+        if (halfNext == null)
+        {
+            return cell;
+        }
+        Cell next = halfNext.getNeighbor(upDown);
+        if (next == null || next.getColor() != color)
+        {
+            return cell;
+        }
+        return this.diagOrigin(next, color, leftRight, upDown);
     }
 
-    private int aligned(Cell cell)
+    private Cell straightOrigin(Cell cell, Color color, Direction direction)
     {
-        Objects.requireNonNull(cell);
-        return 0;
+        Cell next = cell.getNeighbor(Objects.requireNonNull(direction));
+        if (next == null || next.getColor() != color)
+        {
+            return cell;
+        }
+        return this.straightOrigin(next, color, direction);
     }
 
+    private int alignedStraight(Cell cell, Color color, Direction direction)
+    {
+        if (cell == null || cell.getColor() != color)
+        {
+            return 0;
+        }
+        Cell next = cell.getNeighbor(direction);
+        return 1 + alignedStraight(next, color, direction);
+    }
+
+    private int alignedDiag(Cell cell, Color color, Direction leftRight, Direction upDown)
+    {
+        if (cell == null || cell.getColor() != color)
+        {
+            return 0;
+        }
+        Cell halfNext = cell.getNeighbor(leftRight);
+        if (halfNext == null)
+        {
+            return 1;
+        }
+        Cell next = halfNext.getNeighbor(upDown);
+        return 1 + alignedDiag(next, color, leftRight, upDown);
+    }
     // TODO make static? check baeldung
+
     /**
      * represents a cell in a Connect-4 board
      */
@@ -245,9 +330,14 @@ public class C4Board
             this.neighbors.put(Direction.LEFT, null);
         }
 
-        Optional<Color> getColor()
+        /**
+         * <strong>may return <code>null</code></strong>
+         *
+         * @return
+         */
+        Color getColor()
         {
-            return Optional.ofNullable(this.color);
+            return this.color;
         }
 
         void setColor(Color color)
@@ -255,9 +345,15 @@ public class C4Board
             this.color = Objects.requireNonNull(color);
         }
 
-        Optional<Cell> getNeighbor(Direction direction)
+        /**
+         * <strong>may return <code>null</code></strong>
+         *
+         * @param direction
+         * @return
+         */
+        Cell getNeighbor(Direction direction)
         {
-            return Optional.ofNullable(this.neighbors.get(direction));
+            return this.neighbors.get(direction);
         }
 
         void setNeighbor(Direction direction, Cell cell)
@@ -350,8 +446,16 @@ public class C4Board
     {
         OutOfBoardException(int columnIdx)
         {
-            super(String.format("column %d not part of the board\nchooseColumn should have prevented this",
+            super(String.format("column %d not part of the board -- chooseColumn should have prevented this",
                                 columnIdx));
+        }
+    }
+
+    private static class InvalidDiagonalException extends IllegalArgumentException
+    {
+        InvalidDiagonalException(Direction leftRight, Direction upDown)
+        {
+            super(String.format("%s + %s is not a valid diagonal", leftRight.toString(), upDown.toString()));
         }
     }
 }
