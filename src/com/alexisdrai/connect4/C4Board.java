@@ -3,8 +3,9 @@ package com.alexisdrai.connect4;
 import java.util.Scanner;
 import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.OptionalInt;
 import java.util.Objects;
+
+import static com.alexisdrai.util.Misc.*;
 
 /**
  * a Connect-4 board.
@@ -23,9 +24,10 @@ import java.util.Objects;
  */
 public class C4Board
 {
-    private static final int TTL_COLS    = 7;
-    private static final int TTL_ROWS    = 6;
-    private static final int TTL_PLAYERS = 2;
+    private static final int TTL_COLS      = 7;
+    private static final int TTL_ROWS      = 6;
+    private static final int TTL_PLAYERS   = 2;
+    private static final int WIN_CONDITION = 4;
 
     private static final Scanner scanner = new Scanner(System.in);
 
@@ -147,6 +149,16 @@ public class C4Board
         return this.board.clone();
     }
 
+    int[] getTopFreeCells()
+    {
+        return this.topFreeCells.clone();
+    }
+
+    C4Player[] getPlayers()
+    {
+        return this.players.clone();
+    }
+
     private boolean isFull()
     {
         return Arrays.stream(topFreeCells).sum() == -1 * TTL_COLS; // column i is full => topFreeCells[i] = -1
@@ -176,7 +188,7 @@ public class C4Board
                 System.out.println("~~~~~~~~~~~~~~ Game over ~~~~~~~~~~~~~~");
                 if (this.isWon())
                 {
-                    System.out.println(player.getColorfulName() + " wins");
+                    System.out.println("Winner: " + player.getColorfulName());
                 }
                 this.displayBoard();
                 return true;
@@ -188,6 +200,7 @@ public class C4Board
     private void displayBoard()
     {
         String tokenStr = "@";
+        System.out.println();
         for (int i = 0; i < TTL_ROWS; i++)
         {
             for (int j = 0; j < TTL_COLS; j++)
@@ -205,16 +218,7 @@ public class C4Board
             }
             System.out.println();
         }
-    }
-
-    private String toRed(String orig)
-    {
-        return "\u001b[31m" + Objects.requireNonNull(orig) + "\u001b[0m";
-    }
-
-    private String toYellow(String orig)
-    {
-        return "\u001b[33m" + Objects.requireNonNull(orig) + "\u001b[0m";
+        System.out.println();
     }
 
     private void registerMove(C4Player player)
@@ -238,25 +242,26 @@ public class C4Board
 
     private void check(Cell cell, Color color)
     {
-        OptionalInt optAlignment = this.aligned(Objects.requireNonNull(cell), color);
-        optAlignment.ifPresent(alignment -> {
-            if (alignment >= 4)
-            {
-                this.win();
-            }
-        });
+        int maxAlignment = this.aligned(Objects.requireNonNull(cell), color);
+        if (maxAlignment >= WIN_CONDITION)
+        {
+            this.win();
+        }
     }
 
-    private OptionalInt aligned(Cell cell, Color color)
+    private int aligned(Cell cell, Color color)
     {
-        int[] alignments = new int[4]; // {0, 0, 0, 0};
+        int[] alignments = new int[4];
 
         alignments[0] = alignedStraight(upOrigin(cell, color), color, Direction.DOWN);                      // '|'
         alignments[1] = alignedDiag(topLeftOrigin(cell, color), color, Direction.RIGHT, Direction.DOWN);    // '\'
         alignments[2] = alignedStraight(leftOrigin(cell, color), color, Direction.RIGHT);                   // '-'
         alignments[3] = alignedDiag(bottomLeftOrigin(cell, color), color, Direction.RIGHT, Direction.UP);   // '/'
-
-        return Arrays.stream(alignments).max();
+        //        System.out.println("| " + alignments[0]
+        //                           + " \\ " + alignments[1]
+        //                           + " - " + alignments[2]
+        //                           + " / " + alignments[3]);
+        return Arrays.stream(alignments).max().getAsInt();
     }
 
     private Cell upOrigin(Cell cell, Color color)
@@ -338,6 +343,8 @@ public class C4Board
 
     /**
      * represents a cell in a Connect-4 board
+     * <p><code>Cell</code>s can only access other <code>Cell</code>s, and the {@link Color} and {@link Direction}
+     * <code>Enum</code>s, which are all static</p>
      */
     private static class Cell
     {
@@ -368,6 +375,11 @@ public class C4Board
         void setColor(Color color)
         {
             this.color = Objects.requireNonNull(color);
+        }
+
+        void removeColor()
+        {
+            this.color = null;
         }
 
         /**
@@ -425,7 +437,7 @@ public class C4Board
         {
             int column = -1;
 
-            while (column < 1 || column > TTL_COLS || topFreeCells[column - 1] < 0)
+            while (column < 1 || column > TTL_COLS || getTopFreeCells()[column - 1] < 0)
             {
                 System.out.printf("%s : please choose a non-full column between 1 and %d%n",
                                   this.getColorfulName(),
@@ -456,7 +468,70 @@ public class C4Board
         @Override
         int chooseMove()
         {
-            return super.chooseMove();
+            System.out.println(this.getColorfulName() + "'s turn");
+            Cell[][] tmpBoard     = Objects.requireNonNull(getBoard());
+            int      width        = tmpBoard[0].length;
+            int[]    columnScores = new int[width];
+            int      blockIdx     = -1;
+            int      topFreeIdx, score, otherScore, result;
+            Color otherColor = getPlayers()[0].equals(this) ? getPlayers()[1].getColor()
+                                                            : getPlayers()[0].getColor();
+            for (int i = 0; i < width; i++)
+            {
+                topFreeIdx = getTopFreeCells()[i];
+                if (topFreeIdx >= 0)
+                {
+                    Cell cell = tmpBoard[topFreeIdx][i];
+                    score = testAligned(cell, this.getColor());
+                    //                    System.out.printf("cell[%d][%d]; %s: %d\n", topFreeIdx, i, this.getColorfulName(), score);
+                    otherScore = testAligned(cell, otherColor);
+                    //                    System.out.printf("cell[%d][%d]; THEM: %d\n", topFreeIdx, i, otherScore);
+                    if (score == WIN_CONDITION) // winning move
+                    {
+                        //                        System.out.println("!booyah!");
+                        return i;
+                    }
+                    if (otherScore == WIN_CONDITION) // getting out of check
+                    {
+                        //                        System.out.println("!block ya!");
+                        blockIdx = i;
+                    }
+                    columnScores[i] = score + otherScore * otherScore;
+                    // using squares to roughly bias the model in favor of bigger alignments
+                }
+            }
+            if (blockIdx >= 0 && blockIdx <= 7)
+            {
+                return blockIdx;
+            }
+            boolean allEqual = true;
+            for (int i = 0; i < width - 1; i++)
+            {
+                if (!Objects.equals(columnScores[i], columnScores[i + 1]))
+                {
+                    allEqual = false;
+                    break;
+                }
+            }
+            if (allEqual)
+            {
+                result = (int) (Math.random() * 7);
+                //                System.out.println("idx at random... " + result);
+            }
+            else
+            {
+                result = maxIdxFromArray(columnScores);
+                //                System.out.println("idx of best is " + result + " with score of " + columnScores[result]);
+            }
+            return result;
+        }
+
+        private int testAligned(Cell cell, Color color)
+        {
+            cell.setColor(color);
+            int score = aligned(cell, color);
+            cell.removeColor();
+            return score;
         }
     }
 

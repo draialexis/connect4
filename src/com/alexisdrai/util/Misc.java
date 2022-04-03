@@ -20,11 +20,11 @@ public class Misc
         return "\u001b[0m" + Objects.requireNonNull(orig);
     }
 
-    public static int maxFromArray(int[] arr, boolean returnIdx)
+    public static int maxIdxFromArray(int[] arr)
     {
         if (arr == null || arr.length == 0)
         {
-            throw new IllegalArgumentException("non-existant or empty array");
+            throw new IllegalArgumentException("non-existent or empty array");
         }
         int idx = 0;
         int max = arr[idx];
@@ -36,6 +36,6 @@ public class Misc
                 max = arr[idx];
             }
         }
-        return returnIdx ? idx : max;
+        return idx;
     }
 }
