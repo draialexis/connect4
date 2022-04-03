@@ -142,6 +142,11 @@ public class C4Board
         Arrays.fill(this.topFreeCells, TTL_ROWS - 1);
     }
 
+    Cell[][] getBoard()
+    {
+        return this.board.clone();
+    }
+
     private boolean isFull()
     {
         return Arrays.stream(topFreeCells).sum() == -1 * TTL_COLS; // column i is full => topFreeCells[i] = -1
