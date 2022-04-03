@@ -55,8 +55,18 @@ public class C4Board
 
             while (name == null || name.equals(""))
             {
-                System.out.println("Who shall play " + color + "?");
-                System.out.println("Please enter your name, or \"bot\" (in lowercase) to assign them " + color);
+                String colorStr = color.toString().toLowerCase();
+                if (color == Color.RED)
+                {
+                    colorStr = toRed(colorStr);
+                }
+                if (color == Color.YELLOW)
+                {
+                    colorStr = toYellow(colorStr);
+                }
+                System.out.println("Who shall play " + colorStr + "?");
+                System.out.println(
+                        "(please enter your name, or \"bot\" (in lowercase) to assign them " + colorStr + ")");
                 if (scanner.hasNextLine())
                 {
                     name = scanner.nextLine();
@@ -161,8 +171,7 @@ public class C4Board
                 System.out.println("~~~~~~~~~~~~~~ Game over ~~~~~~~~~~~~~~");
                 if (this.isWon())
                 {
-                    System.out.println(player.getName() + " wins");
-                    //TODO use player.getColor() to display name in specific color
+                    System.out.println(player.getColorfulName() + " wins");
                 }
                 this.displayBoard();
                 return true;
@@ -173,6 +182,7 @@ public class C4Board
 
     private void displayBoard()
     {
+        String tokenStr = "@";
         for (int i = 0; i < TTL_ROWS; i++)
         {
             for (int j = 0; j < TTL_COLS; j++)
@@ -185,11 +195,21 @@ public class C4Board
                 }
                 else
                 {
-                    System.out.print("" + (color == Color.RED ? "@" : "X"));
+                    System.out.print("" + (color == Color.RED ? toRed(tokenStr) : toYellow(tokenStr)));
                 }
             }
             System.out.println();
         }
+    }
+
+    private String toRed(String orig)
+    {
+        return "\u001b[31m" + Objects.requireNonNull(orig) + "\u001b[0m";
+    }
+
+    private String toYellow(String orig)
+    {
+        return "\u001b[33m" + Objects.requireNonNull(orig) + "\u001b[0m";
     }
 
     private void registerMove(C4Player player)
@@ -378,6 +398,19 @@ public class C4Board
             return this.name;
         }
 
+        String getColorfulName()
+        {
+            if (this.color == Color.RED)
+            {
+                return toRed(this.getName());
+            }
+            if (this.color == Color.YELLOW)
+            {
+                return toYellow(this.getName());
+            }
+            return this.getName();
+        }
+
         Color getColor()
         {
             return this.color;
@@ -389,9 +422,8 @@ public class C4Board
 
             while (column < 1 || column > TTL_COLS || topFreeCells[column - 1] < 0)
             {
-                System.out.printf("%s (%s): Please choose a non-full column between 1 and %d%n",
-                                  this.getName(),
-                                  this.getColor(),
+                System.out.printf("%s : please choose a non-full column between 1 and %d%n",
+                                  this.getColorfulName(),
                                   TTL_COLS);
                 try
                 {
