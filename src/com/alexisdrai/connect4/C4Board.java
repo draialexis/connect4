@@ -34,7 +34,7 @@ public class C4Board
      */
     private final int[]      topFreeCells = new int[TTL_COLS];
     private final C4Player[] players      = new C4Player[TTL_PLAYERS];
-    private final Cell[][]   cells        = new Cell[TTL_ROWS][];
+    private final Cell[][]   board        = new Cell[TTL_ROWS][];
 
     private boolean isWon;
 
@@ -91,10 +91,10 @@ public class C4Board
         // putting the board itself together
         for (int i = 0; i < TTL_ROWS; i++)
         {
-            this.cells[i] = new Cell[TTL_COLS];
+            this.board[i] = new Cell[TTL_COLS];
             for (int j = 0; j < TTL_COLS; j++)
             {
-                this.cells[i][j] = new Cell();
+                this.board[i][j] = new Cell();
             }
         }
 
@@ -106,33 +106,33 @@ public class C4Board
                 if (i > 0)
                 {
                     // not top row => add upper neighbors
-                    this.cells[i][j].setNeighbor(
+                    this.board[i][j].setNeighbor(
                             Direction.TOP,
-                            this.cells[i - 1][j]
+                            this.board[i - 1][j]
                     );
                 }
                 if (j < TTL_COLS - 1)
                 {
                     // not rightmost col => add right neighbors
-                    this.cells[i][j].setNeighbor(
+                    this.board[i][j].setNeighbor(
                             Direction.RIGHT,
-                            this.cells[i][j + 1]
+                            this.board[i][j + 1]
                     );
                 }
                 if (i < TTL_ROWS - 1)
                 {
                     // not bottom row => add lower neighbors
-                    this.cells[i][j].setNeighbor(
+                    this.board[i][j].setNeighbor(
                             Direction.BOTTOM,
-                            this.cells[i + 1][j]
+                            this.board[i + 1][j]
                     );
                 }
                 if (j > 0)
                 {
                     // not leftmost col => add left neighbors
-                    this.cells[i][j].setNeighbor(
+                    this.board[i][j].setNeighbor(
                             Direction.LEFT,
-                            this.cells[i][j - 1]
+                            this.board[i][j - 1]
                     );
                 }
             }
@@ -188,7 +188,7 @@ public class C4Board
             for (int j = 0; j < TTL_COLS; j++)
             {
                 System.out.print(" ");
-                Color color = this.cells[i][j].getColor();
+                Color color = this.board[i][j].getColor();
                 if (color == null)
                 {
                     System.out.print("O");
@@ -226,8 +226,8 @@ public class C4Board
         }
 
         int row = this.topFreeCells[columnIdx];
-        this.cells[row][columnIdx].setColor(player.getColor());
-        this.check(this.cells[row][columnIdx], player.getColor());
+        this.board[row][columnIdx].setColor(player.getColor());
+        this.check(this.board[row][columnIdx], player.getColor());
         this.topFreeCells[columnIdx]--;
     }
 
