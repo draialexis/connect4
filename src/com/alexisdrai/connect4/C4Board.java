@@ -1,5 +1,6 @@
 package com.alexisdrai.connect4;
 
+import java.nio.file.Path;
 import java.util.Scanner;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -29,7 +30,7 @@ public class C4Board
     private static final int TTL_PLAYERS   = 2;
     private static final int WIN_CONDITION = 4;
 
-    private static final Scanner scanner = new Scanner(System.in);
+    static final Scanner scanner = new Scanner(System.in);
 
     /**
      * an array of the indices of the topmost free cell of each column
@@ -38,13 +39,24 @@ public class C4Board
     private final C4Player[] players      = new C4Player[TTL_PLAYERS];
     private final Cell[][]   board        = new Cell[TTL_ROWS][];
 
-    private boolean isWon;
+    private C4Player currentPlayer;
+    private boolean  isWon;
+    private boolean  isFull;
 
     C4Board()
     {
-        isWon = false;
+        this.isWon = this.isFull = false;
+        this.currentPlayer = null;
         assignPlayers();
         resetBoard();
+    }
+
+    C4Board(Path path)
+    {
+        this.isWon = this.isFull = false;
+        this.currentPlayer = null;
+        resetBoard();
+        this.load(path);
     }
 
     private void assignPlayers()
@@ -86,6 +98,7 @@ public class C4Board
             }
             allCount++;
         }
+        this.setCurrentPlayer(this.players[0]);
     }
 
     private void resetBoard()
@@ -144,6 +157,25 @@ public class C4Board
         Arrays.fill(this.topFreeCells, TTL_ROWS - 1);
     }
 
+    C4Player getCurrentPlayer()
+    {
+        return this.currentPlayer;
+    }
+
+    private void switchPlayer()
+    {
+        // nice to have: iterate through whole player structure regardless of size,
+        // to allow for scaling to more than 2 players
+
+        C4Player next = (this.currentPlayer == this.players[0]) ? this.players[1] : this.players[0];
+        this.setCurrentPlayer(next);
+    }
+
+    private void setCurrentPlayer(C4Player currentPlayer)
+    {
+        this.currentPlayer = currentPlayer;
+    }
+
     Cell[][] getBoard()
     {
         return this.board.clone();
@@ -161,7 +193,12 @@ public class C4Board
 
     private boolean isFull()
     {
-        return Arrays.stream(topFreeCells).sum() == -1 * TTL_COLS; // column i is full => topFreeCells[i] = -1
+        return this.isFull;
+    }
+
+    void updateFull()
+    {
+        this.isFull = (Arrays.stream(topFreeCells).sum() == -1 * TTL_COLS); // column i is full => topFreeCells[i] = -1
     }
 
     private void win()
@@ -174,30 +211,32 @@ public class C4Board
         return this.isWon;
     }
 
+    boolean isOver()
+    {
+        return this.isWon() || this.isFull();
+    }
+
     /**
      * runs the sequence of actions that make up a turn
      */
-    public boolean playTurn()
+    public void playTurn()
     {
-        for (C4Player player : this.players)
+        this.displayBoard();
+        this.registerMove(Objects.requireNonNull(this.getCurrentPlayer()));
+        this.updateFull();
+        if (this.isOver())
         {
-            this.displayBoard();
-            this.registerMove(Objects.requireNonNull(player));
-            if (this.isWon() || this.isFull())
+            System.out.println("~~~~~~~~~~~~~~ Game over ~~~~~~~~~~~~~~");
+            if (this.isWon())
             {
-                System.out.println("~~~~~~~~~~~~~~ Game over ~~~~~~~~~~~~~~");
-                if (this.isWon())
-                {
-                    System.out.println("Winner: " + player.getColorfulName());
-                }
-                this.displayBoard();
-                return true;
+                System.out.println("Winner: " + this.getCurrentPlayer().getColorfulName());
             }
+            this.displayBoard();
         }
-        return false;
+        this.switchPlayer();
     }
 
-    private void displayBoard()
+    void displayBoard()
     {
         String tokenStr = "@";
         System.out.println();
@@ -221,7 +260,7 @@ public class C4Board
         System.out.println();
     }
 
-    private void registerMove(C4Player player)
+    void registerMove(C4Player player)
     {
         int columnIdx = Objects.requireNonNull(player).chooseMove();
 
@@ -339,7 +378,16 @@ public class C4Board
         Cell next = halfNext.getNeighbor(upDown);
         return 1 + alignedDiag(next, color, leftRight, upDown);
     }
-    // TODO make static? check baeldung
+
+    private void save(Path path)
+    {
+        //call write functions from util misc
+    }
+
+    private void load(Path path)
+    {
+        //call write functions from util misc
+    }
 
     /**
      * represents a cell in a Connect-4 board
@@ -356,10 +404,10 @@ public class C4Board
         {
             this.color = null;
             this.neighbors = new EnumMap<>(Direction.class);
-            this.neighbors.put(Direction.UP, null);
-            this.neighbors.put(Direction.RIGHT, null);
-            this.neighbors.put(Direction.DOWN, null);
-            this.neighbors.put(Direction.LEFT, null);
+            for (Direction direction : Direction.values())
+            {
+                this.neighbors.put(direction, null);
+            }
         }
 
         /**
@@ -453,7 +501,6 @@ public class C4Board
                     }
                 }
             }
-
             return column - 1; // the index of said column
         }
     }
