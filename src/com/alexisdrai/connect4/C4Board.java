@@ -599,6 +599,7 @@ public class C4Board
         UP, RIGHT, DOWN, LEFT
     }
 
+    @SuppressWarnings("serial")
     private static class FullColumnException extends IllegalArgumentException
     {
         FullColumnException(int columnIdx)
@@ -608,6 +609,7 @@ public class C4Board
         }
     }
 
+    @SuppressWarnings("serial")
     private static class OutOfBoardException extends IllegalArgumentException
     {
         OutOfBoardException(int columnIdx)
@@ -617,11 +619,14 @@ public class C4Board
         }
     }
 
+    @SuppressWarnings("serial")
     private static class InvalidDiagonalException extends IllegalArgumentException
     {
         InvalidDiagonalException(Direction leftRight, Direction upDown)
         {
-            super(String.format("%s + %s is not a valid diagonal", leftRight.toString(), upDown.toString()));
+            super(String.format("%s + %s is not a valid diagonal",
+                                Objects.requireNonNull(leftRight),
+                                Objects.requireNonNull(upDown)));
         }
     }
 }
