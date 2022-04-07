@@ -46,10 +46,21 @@ public class C4Board
 
     C4Board()
     {
-        this.isWon = this.isFull = false;
-        this.currentPlayer = null;
+        this(null);
         assignPlayers();
         resetBoard();
+    }
+
+    C4Board(Path path)
+    {
+        this.isWon = false;
+        this.isFull = false;
+        this.currentPlayer = null;
+        this.tokensLeft = TTL_COLS * TTL_ROWS;
+        if (path != null)
+        {
+            this.load(path);
+        }
     }
 
     C4Board(Path path)
