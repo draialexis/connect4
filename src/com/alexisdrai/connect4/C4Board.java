@@ -1,6 +1,7 @@
 package com.alexisdrai.connect4;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Scanner;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -25,12 +26,16 @@ import static com.alexisdrai.util.Misc.*;
  */
 public class C4Board
 {
+    static final        Scanner scanner   = new Scanner(System.in);
+    static final        Path    PATH      = Paths.get("/data/save.txt");
+    public static final int     SAVE_CODE = -2;
+    static final        int     LOAD_CODE = -3;
+    static final        int     QUIT_CODE = -4;
+
     private static final int TTL_COLS      = 7;
     private static final int TTL_ROWS      = 6;
     private static final int TTL_PLAYERS   = 2;
     private static final int WIN_CONDITION = 4;
-
-    static final Scanner scanner = new Scanner(System.in);
 
     /**
      * an array of the indices of the topmost free cell of each column
@@ -228,26 +233,7 @@ public class C4Board
         return this.tokensLeft;
     }
 
-    /**
-     * runs the sequence of actions that make up a turn
-     */
-    public void playTurn()
-    {
-        this.displayBoard();
-        this.registerMove(this.getCurrentPlayer());
-        if (this.isOver())
-        {
-            System.out.println("~~~~~~~~~~~~~~ Game over ~~~~~~~~~~~~~~");
-            if (this.isWon())
-            {
-                System.out.println("Winner: " + this.getCurrentPlayer().getColorfulName());
-            }
-            this.displayBoard();
-        }
-        this.switchPlayer();
-    }
-
-    private void switchPlayer()
+    void switchPlayer()
     {
         // nice to have: iterate through whole player structure regardless of size,
         // to allow for scaling to more than 2 players
@@ -292,11 +278,9 @@ public class C4Board
         System.out.println();
     }
 
-    void registerMove(C4Player player)
+    void registerMove(int columnIdx)
     {
-        Objects.requireNonNull(player);
-
-        int columnIdx = player.chooseMove();
+        Color color = this.getCurrentPlayer().getColor();
 
         if (!(0 <= columnIdx && columnIdx < TTL_COLS))
         {
@@ -310,9 +294,9 @@ public class C4Board
         // finding "altitude" of inserted token
         int row = this.getTopFreeCells()[columnIdx];
         // coloring in the token
-        this.board[row][columnIdx].setColor(player.getColor());
+        this.board[row][columnIdx].setColor(color);
         // checking for victory
-        this.check(this.board[row][columnIdx], player.getColor());
+        this.check(this.board[row][columnIdx], color);
         // updating trackers ("altitudes", number of turns left)
         this.takeCell(columnIdx);
     }
@@ -448,14 +432,21 @@ public class C4Board
         return 1 + alignedDiag(next, color, leftRight, upDown);
     }
 
-    private void save(Path path)
+    void save(Path path)
     {
-        //call write functions from util misc
+        System.out.println("saving game...");
+        // call write functions from util misc
+        // do the thing
+        System.out.println("game saved");
     }
 
     private void load(Path path)
     {
-        //call write functions from util misc
+        System.out.println("loading game...");
+        // call write functions from util misc
+        // do the thing
+        System.out.println("game loaded");
+        this.displayBoard();
     }
 
     /**
@@ -518,7 +509,7 @@ public class C4Board
         }
     }
 
-    private class C4Player
+    public class C4Player
     {
         private final String name;
         private final Color  color;
@@ -556,8 +547,8 @@ public class C4Board
         int chooseMove()
         {
             int column = -1;
-
-            while (column < 1 || column > TTL_COLS || getTopFreeCells()[column - 1] < 0)
+            int input;
+            while (column < 1 || column > C4Board.TTL_COLS || getTopFreeCells()[column - 1] < 0)
             {
                 System.out.printf("%s : please choose a non-full column between 1 and %d%n",
                                   this.getColorfulName(),
@@ -567,13 +558,26 @@ public class C4Board
                     column = scanner.nextInt();
                 } catch (Exception ignored)
                 {
-                    if (scanner.hasNextLine()) // purging the scanner for the next attempt
+                    if (scanner.hasNext())
                     {
-                        scanner.nextLine();
+                        input = scanner.next().charAt(0);
+                        switch (input)
+                        {
+                            case ('s') -> {
+                                return SAVE_CODE;
+                            }
+                            case ('l') -> {
+                                return LOAD_CODE;
+                            }
+                            case ('q') -> {
+                                return QUIT_CODE;
+                            }
+                        }
+                        scanner.nextLine();// purging the scanner for the next attempt
                     }
                 }
             }
-            return column - 1; // the index of said column
+            return column - 1;// the index of said column
         }
     }
 
