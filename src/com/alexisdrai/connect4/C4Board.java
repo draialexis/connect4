@@ -516,6 +516,13 @@ public class C4Board
         int chooseMove()
         {
             System.out.println(this.getColorfulName() + "'s turn");
+            try
+            {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex)
+            {
+                Thread.currentThread().interrupt();
+            }
             Cell[][] tmpBoard     = Objects.requireNonNull(getBoard());
             int      width        = tmpBoard[0].length;
             int[]    columnScores = new int[width];
