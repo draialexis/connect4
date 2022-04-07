@@ -42,6 +42,7 @@ public class C4Board
     private C4Player currentPlayer;
     private boolean  isWon;
     private boolean  isFull;
+    private int      tokensLeft;
 
     C4Board()
     {
@@ -198,7 +199,7 @@ public class C4Board
 
     void updateFull()
     {
-        this.isFull = (Arrays.stream(topFreeCells).sum() == -1 * TTL_COLS); // column i is full => topFreeCells[i] = -1
+        this.isFull = (this.getTokensLeft() == 0);
     }
 
     private void win()
@@ -214,6 +215,23 @@ public class C4Board
     boolean isOver()
     {
         return this.isWon() || this.isFull();
+    }
+
+    private void takeCell(int columnIdx)
+    {
+        this.topFreeCells[columnIdx]--;
+        this.useToken();
+    }
+
+    private void useToken()
+    {
+        this.tokensLeft--;
+        this.updateFull();
+    }
+
+    int getTokensLeft()
+    {
+        return this.tokensLeft;
     }
 
     /**
@@ -276,7 +294,8 @@ public class C4Board
         int row = this.topFreeCells[columnIdx];
         this.board[row][columnIdx].setColor(player.getColor());
         this.check(this.board[row][columnIdx], player.getColor());
-        this.topFreeCells[columnIdx]--;
+        // updating trackers ("altitudes", number of turns left)
+        this.takeCell(columnIdx);
     }
 
     private void check(Cell cell, Color color)
