@@ -63,14 +63,6 @@ public class C4Board
         }
     }
 
-    C4Board(Path path)
-    {
-        this.isWon = this.isFull = false;
-        this.currentPlayer = null;
-        resetBoard();
-        this.load(path);
-    }
-
     private void assignPlayers()
     {
         int botCount = 0;
