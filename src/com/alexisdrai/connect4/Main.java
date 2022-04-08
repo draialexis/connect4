@@ -1,10 +1,19 @@
 package com.alexisdrai.connect4;
 
+import com.alexisdrai.util.Misc;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import static com.alexisdrai.connect4.C4Board.*;
+import static com.alexisdrai.util.Misc.*;
 
 public class Main
 {
-    public static void main(String[] args)
+    public static final Path PATH = Paths.get(".").resolve("save.txt");
+
+    public static void main(String[] args) throws IOException
     {
         System.out.println("Welcome to my Connect4 prototype!");
 
@@ -26,7 +35,20 @@ public class Main
         switch (input)
         {
             case ('n') -> board = new C4Board();
-            case ('l') -> board = new C4Board(PATH);
+            case ('l') -> {
+                try
+                {
+                    board = new C4Board(PATH);
+                } catch (Exception ignored)
+                {
+                    System.out.println(ANSI_CYAN +
+                                       "could not find " +
+                                       PATH +
+                                       "\ncreating new game instead" +
+                                       ANSI_RESET);
+                    board = new C4Board();
+                }
+            }
             case ('q') -> {
                 System.out.println("Thanks, goodbye!");
                 return;
@@ -47,8 +69,28 @@ public class Main
             {
                 switch (chosenMove)
                 {
-                    case (SAVE_CODE) -> board.save(PATH);
-                    case (LOAD_CODE) -> board = new C4Board(PATH);
+                    case (SAVE_CODE) -> {
+                        try
+                        {
+                            board.save(PATH);
+                        } catch (Exception e)
+                        {
+                            System.out.println("could not find nor create file\n" +
+                                               ANSI_CYAN +
+                                               "please ensure path is valid and/or create save.txt in root folder" +
+                                               ANSI_RESET);
+                            throw e;
+                        }
+                    }
+                    case (LOAD_CODE) -> {
+                        try
+                        {
+                            board = new C4Board(PATH);
+                        } catch (Exception ignored)
+                        {
+                            System.out.println(ANSI_CYAN + "could not find " + PATH + ANSI_RESET);
+                        }
+                    }
                     case (QUIT_CODE) -> {
                         System.out.println("Thanks for playing, goodbye!");
                         return;
@@ -75,4 +117,5 @@ public class Main
         }
         System.out.println("Thanks for playing!");
     }
+    // TODO replace clone() calls to better read-only copies
 }

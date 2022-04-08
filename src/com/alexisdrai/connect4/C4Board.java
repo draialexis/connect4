@@ -1,13 +1,12 @@
 package com.alexisdrai.connect4;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Scanner;
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.Objects;
+import java.util.*;
 
 import static com.alexisdrai.util.Misc.*;
+import static java.nio.file.StandardOpenOption.CREATE;
 
 /**
  * a Connect-4 board.
@@ -27,7 +26,6 @@ import static com.alexisdrai.util.Misc.*;
 public class C4Board
 {
     static final        Scanner scanner   = new Scanner(System.in);
-    static final        Path    PATH      = Paths.get("/data/save.txt");
     public static final int     SAVE_CODE = -2;
     static final        int     LOAD_CODE = -3;
     static final        int     QUIT_CODE = -4;
@@ -44,28 +42,82 @@ public class C4Board
     private final C4Player[] players      = new C4Player[TTL_PLAYERS];
     private final Cell[][]   board        = new Cell[TTL_ROWS][];
 
-    private C4Player currentPlayer;
+    private int      tokensLeft;
     private boolean  isWon;
     private boolean  isFull;
-    private int      tokensLeft;
+    private C4Player currentPlayer;
 
-    C4Board()
+    C4Board() throws IOException
     {
         this(null);
         assignPlayers();
+        this.setCurrentPlayer(this.players[0]);
         resetBoard();
     }
 
-    C4Board(Path path)
+    C4Board(Path path) throws IOException
     {
+        this.tokensLeft = TTL_COLS * TTL_ROWS;
         this.isWon = false;
         this.isFull = false;
         this.currentPlayer = null;
-        this.tokensLeft = TTL_COLS * TTL_ROWS;
         if (path != null)
         {
             this.load(path);
         }
+    }
+
+    void save(Path path) throws IOException
+    {
+        Objects.requireNonNull(path);
+        System.out.println("saving game...");
+
+        int[]    tmpTopFreeCells = this.getTopFreeCells();
+        C4Player crtPlayer       = this.getCurrentPlayer();
+
+        StringBuilder data = new StringBuilder();
+
+        data.append(this.getTokensLeft()).append("\n")
+            .append(this.isWon()).append("\n")
+            .append(this.isFull()).append("\n");
+
+        data.append(crtPlayer.toString()).append("\n");
+
+        for (int i = 0; i < tmpTopFreeCells.length; i++)
+        {
+            data.append(tmpTopFreeCells[i]);
+            if (i == tmpTopFreeCells.length - 1)
+            {
+                data.append(";");
+            }
+        }
+
+        for (C4Player player : this.getPlayers())
+        {
+            data.append(player.getName()).append(";").append(player.getColor()).append("\n");
+        }
+        byte[] strToBytes = data.toString().getBytes();
+
+        Files.write(path, strToBytes, CREATE);
+
+        System.out.println("game saved");
+    }
+
+    private void load(Path path) throws IOException
+    {
+        Objects.requireNonNull(path);
+        System.out.println("loading game...");
+        // call write functions from util misc
+        // do the thing
+        List<String> allLines = Files.readAllLines(path);
+
+        for (String line : allLines)
+        {
+            System.out.println(line);
+        }
+
+        System.out.println("game loaded");
+        this.displayBoard();
     }
 
     private void assignPlayers()
@@ -81,11 +133,11 @@ public class C4Board
                 String colorStr = color.toString().toLowerCase();
                 if (color == Color.RED)
                 {
-                    colorStr = toRed(colorStr);
+                    colorStr = ANSI_RED + colorStr + ANSI_RESET;
                 }
                 if (color == Color.YELLOW)
                 {
-                    colorStr = toYellow(colorStr);
+                    colorStr = ANSI_YELLOW + colorStr + ANSI_RESET;
                 }
                 System.out.println("Who shall play " + colorStr + "?");
                 System.out.println(
@@ -107,7 +159,26 @@ public class C4Board
             }
             allCount++;
         }
-        this.setCurrentPlayer(this.players[0]);
+    }
+
+    private void assignPlayers(String[] names)
+    {
+        String name;
+        Color  color;
+        for (int i = 0; i < Color.values().length; i++)
+        {
+            color = Color.values()[i];
+            name = names[i];
+
+            if (name.contains("bot_"))
+            {
+                this.players[i] = new C4Player_CPU(name, color);
+            }
+            else
+            {
+                this.players[i] = new C4Player(name, color);
+            }
+        }
     }
 
     private void resetBoard()
@@ -261,15 +332,15 @@ public class C4Board
                 Color color = this.board[i][j].getColor();
                 if (color == null)
                 {
-                    cellStr = toOriginalColor("0");
+                    cellStr = ANSI_RESET + "0";
                 }
                 if (color == Color.RED)
                 {
-                    cellStr = toRed("#");
+                    cellStr = ANSI_RED + "#" + ANSI_RESET;
                 }
                 if (color == Color.YELLOW)
                 {
-                    cellStr = toYellow("@");
+                    cellStr = ANSI_YELLOW + "@" + ANSI_RESET;
                 }
                 System.out.print(" " + cellStr);
             }
@@ -432,23 +503,6 @@ public class C4Board
         return 1 + alignedDiag(next, color, leftRight, upDown);
     }
 
-    void save(Path path)
-    {
-        System.out.println("saving game...");
-        // call write functions from util misc
-        // do the thing
-        System.out.println("game saved");
-    }
-
-    private void load(Path path)
-    {
-        System.out.println("loading game...");
-        // call write functions from util misc
-        // do the thing
-        System.out.println("game loaded");
-        this.displayBoard();
-    }
-
     /**
      * represents a cell in a Connect-4 board
      * <p><code>Cell</code>s can only access other <code>Cell</code>s, and the {@link Color} and {@link Direction}
@@ -507,6 +561,24 @@ public class C4Board
             Objects.requireNonNull(cell);
             this.neighbors.put(direction, cell);
         }
+
+        EnumMap<Direction, Cell> getNeighbors()
+        {
+            return neighbors.clone();
+        }
+
+        @Override
+        public String toString()
+        {
+            EnumMap<Direction, Cell> neighbors = this.getNeighbors();
+
+            StringBuilder res = new StringBuilder();
+            for (Map.Entry<Direction, Cell> entry : neighbors.entrySet())
+            {
+                res.append(entry.getKey().toString()).append(";").append(entry.getValue().toString());
+            }
+            return "";
+        }
     }
 
     public class C4Player
@@ -534,11 +606,11 @@ public class C4Board
         {
             if (this.color == Color.RED)
             {
-                return toRed(this.getName());
+                return ANSI_RED + this.getName() + ANSI_RESET;
             }
             if (this.color == Color.YELLOW)
             {
-                return toYellow(this.getName());
+                return ANSI_YELLOW + this.getName() + ANSI_RESET;
             }
             System.out.println("Color " + this.color + " not accounted for in getColorfulName()");
             return this.getName();
@@ -578,6 +650,12 @@ public class C4Board
                 }
             }
             return column - 1;// the index of said column
+        }
+
+        @Override
+        public String toString()
+        {
+            return name + ";" + color;
         }
     }
 
