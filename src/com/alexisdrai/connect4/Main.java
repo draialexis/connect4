@@ -1,6 +1,5 @@
 package com.alexisdrai.connect4;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -11,7 +10,7 @@ public class Main
 {
     public static final Path PATH = Paths.get(".").resolve("save.txt");
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException
+    public static void main(String[] args)
     {
         System.out.println("Welcome to my Connect4 prototype!");
 
@@ -34,18 +33,17 @@ public class Main
         {
             case ('n') -> board = new C4Board();
             case ('l') -> {
-                //                try
-                //                {
-                board = new C4Board(PATH);
-                //                } catch (Exception ignored)
-                //                {
-                //                    System.out.println(ANSI_CYAN +
-                //                                       "could not read from " +
-                //                                       PATH +
-                //                                       "\ncreating new game instead" +
-                //                                       ANSI_RESET);
-                //                    board = new C4Board();
-                //                }
+                try
+                {
+                    board = new C4Board(PATH);
+                } catch (Exception ignored)
+                {
+                    System.out.println(ANSI_PURPLE +
+                                       "could not load from " + PATH + ANSI_CYAN +
+                                       "\ncreating new game instead" +
+                                       ANSI_RESET);
+                    board = new C4Board();
+                }
             }
             case ('q') -> {
                 System.out.println("Thanks, goodbye!");
@@ -71,24 +69,24 @@ public class Main
                         try
                         {
                             board.save(PATH);
-                        } catch (Exception e)
+                        } catch (Exception ignored)
                         {
-                            System.out.println("could not find nor create file\n" +
+                            System.out.println(ANSI_PURPLE +
+                                               "could not save to " + PATH + " \n" +
                                                ANSI_CYAN +
-                                               "please ensure path is valid and/or create save.txt in root folder" +
+                                               "please ensure path is valid and/or create " + PATH +
                                                ANSI_RESET);
-                            throw e;
                         }
                     }
                     case (LOAD_CODE) -> {
-                        //                        try
-                        //                        {
-                        board = new C4Board(PATH);
-                        //                        } catch (Exception e)
-                        //                        {
-                        //                            System.out.println(ANSI_RED + e + ANSI_RESET);
-                        //                            System.out.println(ANSI_PURPLE + "could not read from " + PATH + ANSI_RESET);
-                        //                        }
+                        try
+                        {
+                            board = new C4Board(PATH);
+                        } catch (Exception e)
+                        {
+                            System.out.println(ANSI_RED + e);
+                            System.out.println(ANSI_PURPLE + "could not load from " + PATH + ANSI_RESET);
+                        }
                     }
                     case (QUIT_CODE) -> {
                         System.out.println("Thanks for playing, goodbye!");
@@ -110,11 +108,46 @@ public class Main
                         System.out.println("Winner: " + player.getColorfulName());
                     }
                     board.displayBoard();
+                    System.out.println("Play again?\n" +
+                                       "y...: yes\n" +
+                                       "l...: reload\n" +
+                                       "else: quit");
+                    input = 0;
+                    if (scanner.hasNext())
+                    {
+                        input = scanner.next().charAt(0);
+                        scanner.nextLine(); // purge scanner's buffer, including the leftover '\n'
+                    }
                 }
-                board.switchPlayer();
+                if (board.isOver())
+                {
+                    switch (input)
+                    {
+                        case ('y'):
+                            board = new C4Board();
+                            break;
+                        case ('l'):
+                            try
+                            {
+                                board = new C4Board(PATH);
+                            } catch (Exception ignored)
+                            {
+                                System.out.println(ANSI_PURPLE +
+                                                   "could not load from " + PATH + ANSI_CYAN +
+                                                   "\ncreating new game instead" +
+                                                   ANSI_RESET);
+                                board = new C4Board();
+                            }
+                            break;
+                    }
+                }
+                /*else*/
+                if (!board.isOver())
+                {
+                    board.switchPlayer();
+                }
             }
         }
         System.out.println("Thanks for playing!");
     }
-    // TODO replace clone() calls to better read-only copies
 }

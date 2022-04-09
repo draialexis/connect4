@@ -23,6 +23,9 @@ import static com.alexisdrai.util.Misc.*;
  */
 public class C4Board implements Serializable
 {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     static final Scanner scanner   = new Scanner(System.in);
     static final int     SAVE_CODE = -2;
     static final int     LOAD_CODE = -3;
@@ -45,9 +48,12 @@ public class C4Board implements Serializable
     private boolean  isFull;
     private C4Player currentPlayer;
 
-    C4Board() throws IOException, ClassNotFoundException
+    C4Board()
     {
-        this(null);
+        this.tokensLeft = TTL_COLS * TTL_ROWS;
+        Arrays.fill(this.topFreeCells, TTL_ROWS - 1); // marking all free cells as bottom cells
+        this.isWon = false;
+        this.isFull = false;
         assignPlayers();
         this.currentPlayer = this.players[0];
         resetBoard();
@@ -55,57 +61,46 @@ public class C4Board implements Serializable
 
     C4Board(Path path) throws IOException, ClassNotFoundException
     {
-        this.tokensLeft = TTL_COLS * TTL_ROWS;
-        this.isWon = false;
-        this.isFull = false;
-        if (path != null)
+        C4Board loaded = this.load(Objects.requireNonNull(path));
+
+        int[]      loadedTopFreeCells = loaded.getTopFreeCells();
+        C4Player[] loadedPlayers      = loaded.getPlayers();
+        Cell[][]   loadedBoard        = loaded.getBoard();
+
+        this.tokensLeft = loaded.getTokensLeft();
+        this.isWon = loaded.isWon();
+        this.isFull = loaded.isFull();
+        this.currentPlayer = loaded.getCurrentPlayer();
+        resetBoard();
+
+        System.arraycopy(loadedTopFreeCells, 0, this.topFreeCells, 0, TTL_COLS);
+        System.arraycopy(loadedPlayers, 0, this.players, 0, TTL_PLAYERS);
+        for (int i = 0; i < TTL_ROWS; i++)
         {
-            this.load(path);
+            for (int j = 0; j < TTL_COLS; j++)
+            {
+                this.board[i][j].color = loadedBoard[i][j].getColor();
+                this.board[i][j].neighbors.putAll(loadedBoard[i][j].getNeighbors());
+            }
         }
+        displayBoard();
     }
 
-    void save(Path path) throws IOException
+    void save(@SuppressWarnings("SameParameterValue") Path path) throws IOException
     {
         Objects.requireNonNull(path);
         System.out.println("saving game...");
 
         FileOutputStream   fos = new FileOutputStream(String.valueOf(path));
         ObjectOutputStream oos = new ObjectOutputStream(fos);
-        oos.writeObject(this.board[TTL_ROWS - 1][0]);
+        oos.writeObject(this);
         oos.flush();
         oos.close();
-        //        int[]    tmpTopFreeCells = this.getTopFreeCells();
-        //        C4Player crtPlayer       = this.getCurrentPlayer();
-        //
-        //        StringBuilder data = new StringBuilder();
-        //
-        //        data.append(this.getTokensLeft()).append("\n")
-        //            .append(this.isWon()).append("\n")
-        //            .append(this.isFull()).append("\n");
-        //
-        //        data.append(crtPlayer.toString()).append("\n");
-        //
-        //        for (int i = 0; i < tmpTopFreeCells.length; i++)
-        //        {
-        //            data.append(tmpTopFreeCells[i]);
-        //            if (i == tmpTopFreeCells.length - 1)
-        //            {
-        //                data.append(";");
-        //            }
-        //        }
-        //
-        //        for (C4Player player : this.getPlayers())
-        //        {
-        //            data.append(player.getName()).append(";").append(player.getColor()).append("\n");
-        //        }
-        //        byte[] strToBytes = data.toString().getBytes();
-        //
-        //        Files.write(path, strToBytes, CREATE);
 
         System.out.println("game saved");
     }
 
-    private void load(Path path) throws IOException, ClassNotFoundException
+    private C4Board load(Path path) throws IOException, ClassNotFoundException
     {
         Objects.requireNonNull(path);
         System.out.println("loading game...");
@@ -113,18 +108,11 @@ public class C4Board implements Serializable
         FileInputStream   fis = new FileInputStream(String.valueOf(path));
         ObjectInputStream ois = new ObjectInputStream(fis);
 
-        Cell testCell = (Cell) ois.readObject();
+        C4Board newBoard = (C4Board) ois.readObject();
         ois.close();
 
-        //        List<String> allLines = Files.readAllLines(path);
-        //
-        //        for (String line : allLines)
-        //        {
-        //            System.out.println(line);
-        //        }
-        System.out.println(testCell.toString());
         System.out.println("game loaded");
-        this.displayBoard();
+        return newBoard;
     }
 
     private void assignPlayers()
@@ -168,32 +156,6 @@ public class C4Board implements Serializable
         }
     }
 
-    private void assignPlayers(String[] names)
-    {
-        Color[] colors = Color.values();
-        Objects.requireNonNull(names);
-        if (colors.length != names.length)
-        {
-            throw new IllegalStateException("Uh oh... There should be as many colors as there are players");
-        }
-        String name;
-        Color  color;
-        for (int i = 0; i < colors.length; i++)
-        {
-            color = Color.values()[i];
-            name = names[i];
-
-            if (name.contains("bot_"))
-            {
-                this.players[i] = new C4Player_CPU(name, color);
-            }
-            else
-            {
-                this.players[i] = new C4Player(name, color);
-            }
-        }
-    }
-
     private void resetBoard()
     {
         // putting the board itself together
@@ -213,7 +175,7 @@ public class C4Board implements Serializable
             {
                 if (i > 0)
                 {
-                    // not top row => add upper neighbors
+                    // not the top row => add upper neighbors
                     this.board[i][j].setNeighbor(
                             Direction.UP,
                             this.board[i - 1][j]
@@ -221,7 +183,7 @@ public class C4Board implements Serializable
                 }
                 if (j < TTL_COLS - 1)
                 {
-                    // not rightmost col => add right neighbors
+                    // not the rightmost col => add right neighbors
                     this.board[i][j].setNeighbor(
                             Direction.RIGHT,
                             this.board[i][j + 1]
@@ -229,7 +191,7 @@ public class C4Board implements Serializable
                 }
                 if (i < TTL_ROWS - 1)
                 {
-                    // not bottom row => add lower neighbors
+                    // not the bottom row => add lower neighbors
                     this.board[i][j].setNeighbor(
                             Direction.DOWN,
                             this.board[i + 1][j]
@@ -237,7 +199,7 @@ public class C4Board implements Serializable
                 }
                 if (j > 0)
                 {
-                    // not leftmost col => add left neighbors
+                    // not the leftmost col => add left neighbors
                     this.board[i][j].setNeighbor(
                             Direction.LEFT,
                             this.board[i][j - 1]
@@ -245,9 +207,6 @@ public class C4Board implements Serializable
                 }
             }
         }
-
-        // marking all the bottom cells as free
-        Arrays.fill(this.topFreeCells, TTL_ROWS - 1);
     }
 
     C4Player getCurrentPlayer()
@@ -336,7 +295,7 @@ public class C4Board implements Serializable
 
     void displayBoard()
     {
-        String cellStr = "WUH-OH"; // this default string should never be printed
+        String cellStr = "WUH-OH"; // this default string should never get printed
         System.out.println();
         for (int i = 0; i < TTL_ROWS; i++)
         {
@@ -407,10 +366,7 @@ public class C4Board implements Serializable
         alignments[1] = alignedDiag(topLeftOrigin(cell, color), color, Direction.RIGHT, Direction.DOWN);    // '\'
         alignments[2] = alignedStraight(leftOrigin(cell, color), color, Direction.RIGHT);                   // '-'
         alignments[3] = alignedDiag(bottomLeftOrigin(cell, color), color, Direction.RIGHT, Direction.UP);   // '/'
-        //        System.out.println("| " + alignments[0]
-        //                           + " \\ " + alignments[1]
-        //                           + " - " + alignments[2]
-        //                           + " / " + alignments[3]);
+
         return Arrays.stream(alignments).max().getAsInt();
     }
 
@@ -523,6 +479,9 @@ public class C4Board implements Serializable
      */
     private static class Cell implements Serializable
     {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         private final EnumMap<Direction, Cell> neighbors = new EnumMap<>(Direction.class);
 
         private Color color;
@@ -539,7 +498,7 @@ public class C4Board implements Serializable
         /**
          * <strong>may return <code>null</code></strong>
          *
-         * @return
+         * @return a {@link Cell}'s color
          */
         Color getColor()
         {
@@ -559,11 +518,12 @@ public class C4Board implements Serializable
         /**
          * <strong>may return <code>null</code></strong>
          *
-         * @param direction
-         * @return
+         * @param direction the {@link Direction} in which we want to look for a neighbor
+         * @return a neighboring {@link Cell}
          */
         Cell getNeighbor(Direction direction)
         {
+            Objects.requireNonNull(direction);
             return this.neighbors.get(direction);
         }
 
@@ -578,30 +538,13 @@ public class C4Board implements Serializable
         {
             return neighbors.clone();
         }
-
-        @Override
-        public String toString()
-        {
-            return this.color.toString();
-        }
-
-        //        @Override
-        //        public String toString()
-        //        {
-        //            EnumMap<Direction, Cell> neighbors = this.getNeighbors();
-        //
-        //            StringBuilder res = new StringBuilder();
-        //            for (Map.Entry<Direction, Cell> entry : neighbors.entrySet())
-        //            {
-        //                res.append(entry.getKey().toString()).append(":")
-        //                   .append(entry.getValue().toString()).append(";");
-        //            }
-        //            return res.toString();
-        //        }
     }
 
     public class C4Player implements Serializable
     {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         private final String name;
         private final Color  color;
 
@@ -670,28 +613,27 @@ public class C4Board implements Serializable
             }
             return column - 1;// the index of said column
         }
-
-        @Override
-        public String toString()
-        {
-            return name + ";" + color;
-        }
     }
 
     private class C4Player_CPU extends C4Player
     {
+        @Serial
+        private final static long serialVersionUID = 1L;
+
         C4Player_CPU(String name, Color color)
         {
             super(name, color);
+            Objects.requireNonNull(name);
+            Objects.requireNonNull(color);
         }
 
         @Override
         int chooseMove()
         {
             System.out.println(this.getColorfulName() + "'s turn");
-            // sleeping to give player a chance to see the board change
             try
             {
+                // sleeping to give player a chance to see the board change
                 Thread.sleep(250);
             } catch (InterruptedException ex)
             {
@@ -725,14 +667,12 @@ public class C4Board implements Serializable
                 {
                     Cell cell = tmpBoard[topFreeIdx][i];
                     score = testAligned(cell, this.getColor());
-                    //                    System.out.printf("cell[%d][%d]; %s: %d\n", topFreeIdx, i, this.getColorfulName(), score);
                     otherScore = testAligned(cell, otherColor);
-                    //                    System.out.printf("cell[%d][%d]; THEM: %d\n", topFreeIdx, i, otherScore);
-                    if (score == WIN_CONDITION) // winning move
+                    if (score == WIN_CONDITION)
                     {
                         return i;
                     }
-                    if (otherScore == WIN_CONDITION) // getting out of check
+                    if (otherScore == WIN_CONDITION)
                     {
                         blockIdx = i;
                     }
@@ -756,12 +696,10 @@ public class C4Board implements Serializable
             if (allEqual)
             {
                 choiceIdx = (int) (Math.random() * TTL_COLS);
-                //                System.out.println("idx at random... " + result);
             }
             else
             {
                 choiceIdx = maxIdxFromArray(columnScores);
-                //                System.out.println("idx of best is " + result + " with score of " + columnScores[result]);
             }
             return choiceIdx;
         }
@@ -788,9 +726,11 @@ public class C4Board implements Serializable
         UP, RIGHT, DOWN, LEFT
     }
 
-    @SuppressWarnings("serial")
     private static class FullColumnException extends IllegalArgumentException
     {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         FullColumnException(int columnIdx)
         {
             super(String.format("column at index %d is already full -- chooseMove() should have prevented this",
@@ -798,9 +738,11 @@ public class C4Board implements Serializable
         }
     }
 
-    @SuppressWarnings("serial")
     private static class OutOfBoardException extends IllegalArgumentException
     {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         OutOfBoardException(int columnIdx)
         {
             super(String.format("column %d not part of the board -- chooseColumn should have prevented this",
@@ -808,9 +750,11 @@ public class C4Board implements Serializable
         }
     }
 
-    @SuppressWarnings("serial")
     private static class InvalidDiagonalException extends IllegalArgumentException
     {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         InvalidDiagonalException(Direction leftRight, Direction upDown)
         {
             super(String.format("%s + %s is not a valid diagonal",
