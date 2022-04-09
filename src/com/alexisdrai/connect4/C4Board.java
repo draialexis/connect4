@@ -41,7 +41,7 @@ public class C4Board implements Serializable
      */
     private final int[]      topFreeCells = new int[TTL_COLS];
     private final C4Player[] players      = new C4Player[TTL_PLAYERS];
-    private final Cell[][]   board        = new Cell[TTL_ROWS][];
+    private final Cell[][]   board        = new Cell[TTL_ROWS][TTL_COLS];
 
     private int      tokensLeft;
     private boolean  isWon;
@@ -209,6 +209,7 @@ public class C4Board implements Serializable
         }
     }
 
+    //TODO deal
     C4Player getCurrentPlayer()
     {
         return this.currentPlayer;
@@ -219,16 +220,19 @@ public class C4Board implements Serializable
         this.currentPlayer = currentPlayer;
     }
 
+    //TODO deal
     Cell[][] getBoard()
     {
         return this.board.clone();
     }
 
+    //TODO deal
     int[] getTopFreeCells()
     {
         return this.topFreeCells.clone();
     }
 
+    //TODO deal
     C4Player[] getPlayers()
     {
         return this.players.clone();
@@ -515,6 +519,8 @@ public class C4Board implements Serializable
             this.color = null;
         }
 
+        //TODO deal
+
         /**
          * <strong>may return <code>null</code></strong>
          *
@@ -534,6 +540,7 @@ public class C4Board implements Serializable
             this.neighbors.put(direction, cell);
         }
 
+        //TODO deal
         EnumMap<Direction, Cell> getNeighbors()
         {
             return neighbors.clone();
@@ -554,6 +561,7 @@ public class C4Board implements Serializable
             this.color = Objects.requireNonNull(color);
         }
 
+        //TODO deal
         String getName()
         {
             return this.name;
@@ -582,7 +590,7 @@ public class C4Board implements Serializable
         {
             int column = -1;
             int input;
-            while (column < 1 || column > C4Board.TTL_COLS || getTopFreeCells()[column - 1] < 0)
+            while (1 > column || column > C4Board.TTL_COLS || getTopFreeCells()[column - 1] < 0)
             {
                 System.out.printf("%s : please choose a non-full column between 1 and %d%n",
                                   this.getColorfulName(),
