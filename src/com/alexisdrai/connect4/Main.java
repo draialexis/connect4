@@ -1,7 +1,5 @@
 package com.alexisdrai.connect4;
 
-import com.alexisdrai.util.Misc;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,7 +11,7 @@ public class Main
 {
     public static final Path PATH = Paths.get(".").resolve("save.txt");
 
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args) throws IOException, ClassNotFoundException
     {
         System.out.println("Welcome to my Connect4 prototype!");
 
@@ -36,18 +34,18 @@ public class Main
         {
             case ('n') -> board = new C4Board();
             case ('l') -> {
-                try
-                {
-                    board = new C4Board(PATH);
-                } catch (Exception ignored)
-                {
-                    System.out.println(ANSI_CYAN +
-                                       "could not find " +
-                                       PATH +
-                                       "\ncreating new game instead" +
-                                       ANSI_RESET);
-                    board = new C4Board();
-                }
+                //                try
+                //                {
+                board = new C4Board(PATH);
+                //                } catch (Exception ignored)
+                //                {
+                //                    System.out.println(ANSI_CYAN +
+                //                                       "could not read from " +
+                //                                       PATH +
+                //                                       "\ncreating new game instead" +
+                //                                       ANSI_RESET);
+                //                    board = new C4Board();
+                //                }
             }
             case ('q') -> {
                 System.out.println("Thanks, goodbye!");
@@ -83,13 +81,14 @@ public class Main
                         }
                     }
                     case (LOAD_CODE) -> {
-                        try
-                        {
-                            board = new C4Board(PATH);
-                        } catch (Exception ignored)
-                        {
-                            System.out.println(ANSI_CYAN + "could not find " + PATH + ANSI_RESET);
-                        }
+                        //                        try
+                        //                        {
+                        board = new C4Board(PATH);
+                        //                        } catch (Exception e)
+                        //                        {
+                        //                            System.out.println(ANSI_RED + e + ANSI_RESET);
+                        //                            System.out.println(ANSI_PURPLE + "could not read from " + PATH + ANSI_RESET);
+                        //                        }
                     }
                     case (QUIT_CODE) -> {
                         System.out.println("Thanks for playing, goodbye!");

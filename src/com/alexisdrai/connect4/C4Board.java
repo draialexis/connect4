@@ -1,12 +1,10 @@
 package com.alexisdrai.connect4;
 
-import java.io.IOException;
-import java.nio.file.Files;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 
 import static com.alexisdrai.util.Misc.*;
-import static java.nio.file.StandardOpenOption.CREATE;
 
 /**
  * a Connect-4 board.
@@ -23,12 +21,12 @@ import static java.nio.file.StandardOpenOption.CREATE;
  * <tr> <th>5</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
  * </table>
  */
-public class C4Board
+public class C4Board implements Serializable
 {
-    static final        Scanner scanner   = new Scanner(System.in);
-    public static final int     SAVE_CODE = -2;
-    static final        int     LOAD_CODE = -3;
-    static final        int     QUIT_CODE = -4;
+    static final Scanner scanner   = new Scanner(System.in);
+    static final int     SAVE_CODE = -2;
+    static final int     LOAD_CODE = -3;
+    static final int     QUIT_CODE = -4;
 
     private static final int TTL_COLS      = 7;
     private static final int TTL_ROWS      = 6;
@@ -47,20 +45,19 @@ public class C4Board
     private boolean  isFull;
     private C4Player currentPlayer;
 
-    C4Board() throws IOException
+    C4Board() throws IOException, ClassNotFoundException
     {
         this(null);
         assignPlayers();
-        this.setCurrentPlayer(this.players[0]);
+        this.currentPlayer = this.players[0];
         resetBoard();
     }
 
-    C4Board(Path path) throws IOException
+    C4Board(Path path) throws IOException, ClassNotFoundException
     {
         this.tokensLeft = TTL_COLS * TTL_ROWS;
         this.isWon = false;
         this.isFull = false;
-        this.currentPlayer = null;
         if (path != null)
         {
             this.load(path);
@@ -72,50 +69,60 @@ public class C4Board
         Objects.requireNonNull(path);
         System.out.println("saving game...");
 
-        int[]    tmpTopFreeCells = this.getTopFreeCells();
-        C4Player crtPlayer       = this.getCurrentPlayer();
-
-        StringBuilder data = new StringBuilder();
-
-        data.append(this.getTokensLeft()).append("\n")
-            .append(this.isWon()).append("\n")
-            .append(this.isFull()).append("\n");
-
-        data.append(crtPlayer.toString()).append("\n");
-
-        for (int i = 0; i < tmpTopFreeCells.length; i++)
-        {
-            data.append(tmpTopFreeCells[i]);
-            if (i == tmpTopFreeCells.length - 1)
-            {
-                data.append(";");
-            }
-        }
-
-        for (C4Player player : this.getPlayers())
-        {
-            data.append(player.getName()).append(";").append(player.getColor()).append("\n");
-        }
-        byte[] strToBytes = data.toString().getBytes();
-
-        Files.write(path, strToBytes, CREATE);
+        FileOutputStream   fos = new FileOutputStream(String.valueOf(path));
+        ObjectOutputStream oos = new ObjectOutputStream(fos);
+        oos.writeObject(this.board[TTL_ROWS - 1][0]);
+        oos.flush();
+        oos.close();
+        //        int[]    tmpTopFreeCells = this.getTopFreeCells();
+        //        C4Player crtPlayer       = this.getCurrentPlayer();
+        //
+        //        StringBuilder data = new StringBuilder();
+        //
+        //        data.append(this.getTokensLeft()).append("\n")
+        //            .append(this.isWon()).append("\n")
+        //            .append(this.isFull()).append("\n");
+        //
+        //        data.append(crtPlayer.toString()).append("\n");
+        //
+        //        for (int i = 0; i < tmpTopFreeCells.length; i++)
+        //        {
+        //            data.append(tmpTopFreeCells[i]);
+        //            if (i == tmpTopFreeCells.length - 1)
+        //            {
+        //                data.append(";");
+        //            }
+        //        }
+        //
+        //        for (C4Player player : this.getPlayers())
+        //        {
+        //            data.append(player.getName()).append(";").append(player.getColor()).append("\n");
+        //        }
+        //        byte[] strToBytes = data.toString().getBytes();
+        //
+        //        Files.write(path, strToBytes, CREATE);
 
         System.out.println("game saved");
     }
 
-    private void load(Path path) throws IOException
+    private void load(Path path) throws IOException, ClassNotFoundException
     {
         Objects.requireNonNull(path);
         System.out.println("loading game...");
-        // call write functions from util misc
-        // do the thing
-        List<String> allLines = Files.readAllLines(path);
 
-        for (String line : allLines)
-        {
-            System.out.println(line);
-        }
+        FileInputStream   fis = new FileInputStream(String.valueOf(path));
+        ObjectInputStream ois = new ObjectInputStream(fis);
 
+        Cell testCell = (Cell) ois.readObject();
+        ois.close();
+
+        //        List<String> allLines = Files.readAllLines(path);
+        //
+        //        for (String line : allLines)
+        //        {
+        //            System.out.println(line);
+        //        }
+        System.out.println(testCell.toString());
         System.out.println("game loaded");
         this.displayBoard();
     }
@@ -163,9 +170,15 @@ public class C4Board
 
     private void assignPlayers(String[] names)
     {
+        Color[] colors = Color.values();
+        Objects.requireNonNull(names);
+        if (colors.length != names.length)
+        {
+            throw new IllegalStateException("Uh oh... There should be as many colors as there are players");
+        }
         String name;
         Color  color;
-        for (int i = 0; i < Color.values().length; i++)
+        for (int i = 0; i < colors.length; i++)
         {
             color = Color.values()[i];
             name = names[i];
@@ -508,16 +521,15 @@ public class C4Board
      * <p><code>Cell</code>s can only access other <code>Cell</code>s, and the {@link Color} and {@link Direction}
      * <code>Enum</code>s, which are all static</p>
      */
-    private static class Cell
+    private static class Cell implements Serializable
     {
-        private final EnumMap<Direction, Cell> neighbors;
+        private final EnumMap<Direction, Cell> neighbors = new EnumMap<>(Direction.class);
 
         private Color color;
 
         Cell()
         {
             this.color = null;
-            this.neighbors = new EnumMap<>(Direction.class);
             for (Direction direction : Direction.values())
             {
                 this.neighbors.put(direction, null);
@@ -570,18 +582,25 @@ public class C4Board
         @Override
         public String toString()
         {
-            EnumMap<Direction, Cell> neighbors = this.getNeighbors();
-
-            StringBuilder res = new StringBuilder();
-            for (Map.Entry<Direction, Cell> entry : neighbors.entrySet())
-            {
-                res.append(entry.getKey().toString()).append(";").append(entry.getValue().toString());
-            }
-            return "";
+            return this.color.toString();
         }
+
+        //        @Override
+        //        public String toString()
+        //        {
+        //            EnumMap<Direction, Cell> neighbors = this.getNeighbors();
+        //
+        //            StringBuilder res = new StringBuilder();
+        //            for (Map.Entry<Direction, Cell> entry : neighbors.entrySet())
+        //            {
+        //                res.append(entry.getKey().toString()).append(":")
+        //                   .append(entry.getValue().toString()).append(";");
+        //            }
+        //            return res.toString();
+        //        }
     }
 
-    public class C4Player
+    public class C4Player implements Serializable
     {
         private final String name;
         private final Color  color;
@@ -673,7 +692,7 @@ public class C4Board
             // sleeping to give player a chance to see the board change
             try
             {
-                Thread.sleep(1000);
+                Thread.sleep(250);
             } catch (InterruptedException ex)
             {
                 Thread.currentThread().interrupt();
