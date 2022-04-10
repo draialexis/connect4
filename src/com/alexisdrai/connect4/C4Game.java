@@ -39,8 +39,8 @@ public class C4Game implements Serializable
     /**
      * an array of the indices of the topmost free cell of each column
      */
-    private final int[]      topFreeCells = new int[TTL_COLS];
-    private final C4Player[] players      = new C4Player[TTL_PLAYERS];
+    private       int[]      topFreeCells = new int[TTL_COLS];
+    private       C4Player[] players      = new C4Player[TTL_PLAYERS];
     private final Cell[][]   board        = new Cell[TTL_ROWS][TTL_COLS];
 
     private int      tokensLeft;
@@ -210,6 +210,18 @@ public class C4Game implements Serializable
     //TODO deal
     C4Player getCurrentPlayer()
     {
+        //        if (this.currentPlayer.getClass() == C4Player.class)
+        //        {
+        //            return new C4Player(this.currentPlayer.getName(), this.currentPlayer.getColor());
+        //        }
+        //        else
+        //        {
+        //            if (this.currentPlayer.getClass() != C4Player_CPU.class)
+        //            {
+        //                throw new RuntimeException("Player is neither C4Player_CPU nor C4Player");
+        //            }
+        //            return new C4Player_CPU(this.currentPlayer.getName(), this.currentPlayer.getColor());
+        //        }
         return this.currentPlayer;
     }
 
@@ -221,12 +233,12 @@ public class C4Game implements Serializable
     //TODO deal
     Cell[][] getBoard()
     {
-//        Cell[][] res = new Cell[TTL_ROWS][TTL_COLS];
-//        for (int i = 0; i < TTL_ROWS; i++)
-//        {
-//            res[i] = Arrays.copyOf(this.board[i], TTL_COLS);
-//        }
-//        return res;
+        //        Cell[][] res = new Cell[TTL_ROWS][TTL_COLS];
+        //        for (int i = 0; i < TTL_ROWS; i++)
+        //        {
+        //            res[i] = Arrays.copyOf(this.board[i], TTL_COLS);
+        //        }
+        //        return res;
         return this.board;
     }
 
