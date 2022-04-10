@@ -53,18 +53,7 @@ public class C4Game implements Serializable
 
         this.topFreeCells = loaded.getTopFreeCells();
         this.players = loaded.getPlayers();
-
-        Cell[][] loadedBoard = loaded.getBoard();
-        this.resetBoard();
-        //        for (int i = 0; i < TTL_ROWS; i++)
-        //        {
-        //            for (int j = 0; j < TTL_COLS; j++)
-        //            {
-        //                this.board[i][j].color = loadedBoard[i][j].getColor();
-        //                this.board[i][j].neighbors.putAll(loadedBoard[i][j].getAllNeighbors());
-        //            }
-        //        }
-        this.board = loadedBoard;
+        this.board = loaded.getBoard();
         displayBoard();
     }
 
