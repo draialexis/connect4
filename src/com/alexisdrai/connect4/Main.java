@@ -15,7 +15,7 @@ public class Main
         System.out.println("Welcome to my Connect4 prototype!");
 
         char   input = 0;
-        C4Game board = null;
+        C4Game game = null;
 
         while (!(input == 'n' || input == 'l' || input == 'q'))
         {
@@ -31,18 +31,18 @@ public class Main
 
         switch (input)
         {
-            case ('n') -> board = new C4Game();
+            case ('n') -> game = new C4Game();
             case ('l') -> {
                 try
                 {
-                    board = new C4Game(PATH);
+                    game = new C4Game(PATH);
                 } catch (Exception ignored)
                 {
                     System.out.println(ANSI_PURPLE +
                                        "could not load from " + PATH + ANSI_CYAN +
                                        "\ncreating new game instead" +
                                        ANSI_RESET);
-                    board = new C4Game();
+                    game = new C4Game();
                 }
             }
             case ('q') -> {
@@ -56,10 +56,10 @@ public class Main
                            "l...: load\n" +
                            "q...: quit");
 
-        while (!board.isOver())
+        while (!game.isOver())
         {
-            C4Game.C4Player player = board.getCurrentPlayer();
-            board.displayBoard();
+            C4Game.C4Player player = game.getCurrentPlayer();
+            game.displayBoard();
             int chosenMove = player.chooseMove();
             if (chosenMove < 0)
             {
@@ -68,7 +68,7 @@ public class Main
                     case (SAVE_CODE) -> {
                         try
                         {
-                            board.save(PATH);
+                            game.save(PATH);
                         } catch (Exception ignored)
                         {
                             System.out.println(ANSI_PURPLE +
@@ -81,7 +81,7 @@ public class Main
                     case (LOAD_CODE) -> {
                         try
                         {
-                            board = new C4Game(PATH);
+                            game = new C4Game(PATH);
                         } catch (Exception e)
                         {
                             System.out.println(ANSI_RED + e);
@@ -97,16 +97,16 @@ public class Main
             }
             else // player chose a move above 0
             {
-                board.registerMove(chosenMove);
+                game.registerMove(chosenMove);
 
-                if (board.isOver())
+                if (game.isOver())
                 {
                     System.out.println("~~~~~~~~~~~~~~ Game over ~~~~~~~~~~~~~~");
-                    if (board.isWon())
+                    if (game.isWon())
                     {
                         System.out.println("Winner: " + player.getColorfulName());
                     }
-                    board.displayBoard();
+                    game.displayBoard();
                     System.out.println("Play again?\n" +
                                        "y...: yes\n" +
                                        "l...: reload\n" +
@@ -119,26 +119,26 @@ public class Main
                     }
                     switch (input)
                     {
-                        case ('y') -> board = new C4Game();
+                        case ('y') -> game = new C4Game();
 
                         case ('l') -> {
                             try
                             {
-                                board = new C4Game(PATH);
+                                game = new C4Game(PATH);
                             } catch (Exception ignored)
                             {
                                 System.out.println(ANSI_PURPLE +
                                                    "could not load from " + PATH + ANSI_CYAN +
                                                    "\ncreating new game instead" +
                                                    ANSI_RESET);
-                                board = new C4Game();
+                                game = new C4Game();
                             }
                         }
                     }
                 }
-                if (!board.isOver())
+                if (!game.isOver())
                 {
-                    board.switchPlayer();
+                    game.switchPlayer();
                 }
             }
         }
