@@ -98,6 +98,7 @@ public class Main
             else // player chose a move above 0
             {
                 game.registerMove(chosenMove);
+                input = 0;
 
                 if (game.isOver())
                 {
@@ -111,7 +112,6 @@ public class Main
                                        "y...: yes\n" +
                                        "l...: reload\n" +
                                        "else: quit");
-                    input = 0;
                     if (scanner.hasNext())
                     {
                         input = scanner.next().charAt(0);
@@ -136,7 +136,6 @@ public class Main
                                                    ANSI_RESET);
                                 game = new C4Game();
                             }
-                            input = 0;
                         }
                     }
                 }
