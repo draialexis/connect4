@@ -6,21 +6,6 @@ import java.util.*;
 
 import static com.alexisdrai.util.Misc.*;
 
-/**
- * a Connect-4 board.
- * <br>rows are numbered from 0 to {@link C4Game#TTL_ROWS}-1, from top to bottom.
- * <br>columns are numbered from 0 to {@link C4Game#TTL_COLS}-1, from left to right.
- *
- * <table>
- * <tr> <td>.</td></th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th> </tr>
- * <tr> <th>0</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
- * <tr> <th>1</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
- * <tr> <th>2</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
- * <tr> <th>3</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
- * <tr> <th>4</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
- * <tr> <th>5</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
- * </table>
- */
 public class C4Game implements Serializable
 {
     @Serial
@@ -36,9 +21,7 @@ public class C4Game implements Serializable
     private static final int TTL_PLAYERS   = 2;
     private static final int WIN_CONDITION = 4;
 
-    /**
-     * an array of the indices of the topmost free cell of each column
-     */
+    //an array of the indices of the topmost free cell of each column
     private       int[]      topFreeCells = new int[TTL_COLS];
     private       C4Player[] players      = new C4Player[TTL_PLAYERS];
     private final Cell[][]   board        = new Cell[TTL_ROWS][TTL_COLS];
@@ -472,11 +455,6 @@ public class C4Game implements Serializable
         return 1 + alignedDiag(next, color, leftRight, upDown);
     }
 
-    /**
-     * represents a cell in a Connect-4 board
-     * <p><code>Cell</code>s can only access other <code>Cell</code>s, and the {@link Color} and {@link Direction}
-     * <code>Enum</code>s, which are all static</p>
-     */
     private static class Cell implements Serializable
     {
         @Serial
@@ -495,11 +473,6 @@ public class C4Game implements Serializable
             }
         }
 
-        /**
-         * <strong>may return <code>null</code></strong>
-         *
-         * @return a {@link Cell}'s color
-         */
         Color getColor()
         {
             return this.color;
@@ -515,12 +488,6 @@ public class C4Game implements Serializable
             this.color = null;
         }
 
-        /**
-         * <strong>may return <code>null</code></strong>
-         *
-         * @param direction the {@link Direction} in which we want to look for a neighbor
-         * @return a neighboring {@link Cell}
-         */
         Cell getNeighbor(Direction direction)
         {
             Objects.requireNonNull(direction);
