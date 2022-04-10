@@ -8,8 +8,8 @@ import static com.alexisdrai.util.Misc.*;
 
 /**
  * a Connect-4 board.
- * <br>rows are numbered from 0 to {@link C4Board#TTL_ROWS}-1, from top to bottom.
- * <br>columns are numbered from 0 to {@link C4Board#TTL_COLS}-1, from left to right.
+ * <br>rows are numbered from 0 to {@link C4Game#TTL_ROWS}-1, from top to bottom.
+ * <br>columns are numbered from 0 to {@link C4Game#TTL_COLS}-1, from left to right.
  *
  * <table>
  * <tr> <td>.</td></th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th> </tr>
@@ -21,7 +21,7 @@ import static com.alexisdrai.util.Misc.*;
  * <tr> <th>5</th><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td><td>*</td> </tr>
  * </table>
  */
-public class C4Board implements Serializable
+public class C4Game implements Serializable
 {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -48,39 +48,37 @@ public class C4Board implements Serializable
     private boolean  isFull;
     private C4Player currentPlayer;
 
-    C4Board()
+    C4Game()
     {
         this.tokensLeft = TTL_COLS * TTL_ROWS;
         Arrays.fill(this.topFreeCells, TTL_ROWS - 1); // marking all free cells as bottom cells
         this.isWon = false;
         this.isFull = false;
-        assignPlayers();
+        this.assignPlayers();
         this.currentPlayer = this.players[0];
-        resetBoard();
+        this.resetBoard();
     }
 
-    C4Board(Path path) throws IOException, ClassNotFoundException
+    C4Game(Path path) throws IOException, ClassNotFoundException
     {
-        C4Board loaded = this.load(Objects.requireNonNull(path));
-
-        int[]      loadedTopFreeCells = loaded.getTopFreeCells();
-        C4Player[] loadedPlayers      = loaded.getPlayers();
-        Cell[][]   loadedBoard        = loaded.getBoard();
+        C4Game loaded = this.load(Objects.requireNonNull(path));
 
         this.tokensLeft = loaded.getTokensLeft();
         this.isWon = loaded.isWon();
         this.isFull = loaded.isFull();
         this.currentPlayer = loaded.getCurrentPlayer();
-        resetBoard();
 
-        System.arraycopy(loadedTopFreeCells, 0, this.topFreeCells, 0, TTL_COLS);
-        System.arraycopy(loadedPlayers, 0, this.players, 0, TTL_PLAYERS);
+        this.topFreeCells = loaded.getTopFreeCells();
+        this.players = loaded.getPlayers();
+
+        Cell[][] loadedBoard = loaded.getBoard();
+        this.resetBoard();
         for (int i = 0; i < TTL_ROWS; i++)
         {
             for (int j = 0; j < TTL_COLS; j++)
             {
                 this.board[i][j].color = loadedBoard[i][j].getColor();
-                this.board[i][j].neighbors.putAll(loadedBoard[i][j].getNeighbors());
+                this.board[i][j].neighbors.putAll(loadedBoard[i][j].getAllNeighbors());
             }
         }
         displayBoard();
@@ -100,7 +98,7 @@ public class C4Board implements Serializable
         System.out.println("game saved");
     }
 
-    private C4Board load(Path path) throws IOException, ClassNotFoundException
+    private C4Game load(Path path) throws IOException, ClassNotFoundException
     {
         Objects.requireNonNull(path);
         System.out.println("loading game...");
@@ -108,7 +106,7 @@ public class C4Board implements Serializable
         FileInputStream   fis = new FileInputStream(String.valueOf(path));
         ObjectInputStream ois = new ObjectInputStream(fis);
 
-        C4Board newBoard = (C4Board) ois.readObject();
+        C4Game newBoard = (C4Game) ois.readObject();
         ois.close();
 
         System.out.println("game loaded");
@@ -223,24 +221,53 @@ public class C4Board implements Serializable
     //TODO deal
     Cell[][] getBoard()
     {
-        return this.board.clone();
+//        Cell[][] res = new Cell[TTL_ROWS][TTL_COLS];
+//        for (int i = 0; i < TTL_ROWS; i++)
+//        {
+//            res[i] = Arrays.copyOf(this.board[i], TTL_COLS);
+//        }
+//        return res;
+        return this.board;
     }
 
     //TODO deal
     int[] getTopFreeCells()
     {
-        return this.topFreeCells.clone();
+        return Arrays.copyOf(this.topFreeCells, TTL_COLS);
     }
 
     //TODO deal
     C4Player[] getPlayers()
     {
-        return this.players.clone();
+        C4Player[] res = new C4Player[TTL_PLAYERS];
+        for (int i = 0; i < TTL_PLAYERS; i++)
+        {
+            C4Player player;
+            if (this.players[i].getClass() == C4Player.class)
+            {
+                player = new C4Player(this.players[i].getName(), this.players[i].getColor());
+            }
+            else
+            {
+                if (this.players[i].getClass() != C4Player_CPU.class)
+                {
+                    throw new RuntimeException("Player is neither C4Player_CPU nor C4Player");
+                }
+                player = new C4Player_CPU(this.players[i].getName(), this.players[i].getColor());
+            }
+            res[i] = player;
+        }
+        return res;
     }
 
     private boolean isFull()
     {
         return this.isFull;
+    }
+
+    public boolean isEmpty()
+    {
+        return this.getTokensLeft() == TTL_ROWS * TTL_COLS;
     }
 
     void updateFull()
@@ -403,6 +430,7 @@ public class C4Board implements Serializable
     }
 
     private Cell diagOrigin(Cell cell, Color color, Direction leftRight, Direction upDown)
+            throws InvalidDiagonalException
     {
         Objects.requireNonNull(cell);
         Objects.requireNonNull(color);
@@ -540,10 +568,9 @@ public class C4Board implements Serializable
             this.neighbors.put(direction, cell);
         }
 
-        //TODO deal
-        EnumMap<Direction, Cell> getNeighbors()
+        EnumMap<Direction, Cell> getAllNeighbors()
         {
-            return neighbors.clone();
+            return this.neighbors;
         }
     }
 
@@ -561,7 +588,6 @@ public class C4Board implements Serializable
             this.color = Objects.requireNonNull(color);
         }
 
-        //TODO deal
         String getName()
         {
             return this.name;
@@ -572,6 +598,7 @@ public class C4Board implements Serializable
             return this.color;
         }
 
+        // can be expanded with other colors from com.alexisdrai.util.Misc
         String getColorfulName()
         {
             if (this.color == Color.RED)
@@ -590,7 +617,7 @@ public class C4Board implements Serializable
         {
             int column = -1;
             int input;
-            while (1 > column || column > C4Board.TTL_COLS || getTopFreeCells()[column - 1] < 0)
+            while (1 > column || column > C4Game.TTL_COLS || getTopFreeCells()[column - 1] < 0)
             {
                 System.out.printf("%s : please choose a non-full column between 1 and %d%n",
                                   this.getColorfulName(),
@@ -623,7 +650,7 @@ public class C4Board implements Serializable
         }
     }
 
-    private class C4Player_CPU extends C4Player
+    private final class C4Player_CPU extends C4Player
     {
         @Serial
         private final static long serialVersionUID = 1L;

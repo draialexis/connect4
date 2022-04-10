@@ -3,7 +3,7 @@ package com.alexisdrai.connect4;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static com.alexisdrai.connect4.C4Board.*;
+import static com.alexisdrai.connect4.C4Game.*;
 import static com.alexisdrai.util.Misc.*;
 
 public class Main
@@ -14,8 +14,8 @@ public class Main
     {
         System.out.println("Welcome to my Connect4 prototype!");
 
-        char    input = 0;
-        C4Board board = null;
+        char   input = 0;
+        C4Game board = null;
 
         while (!(input == 'n' || input == 'l' || input == 'q'))
         {
@@ -31,18 +31,18 @@ public class Main
 
         switch (input)
         {
-            case ('n') -> board = new C4Board();
+            case ('n') -> board = new C4Game();
             case ('l') -> {
                 try
                 {
-                    board = new C4Board(PATH);
+                    board = new C4Game(PATH);
                 } catch (Exception ignored)
                 {
                     System.out.println(ANSI_PURPLE +
                                        "could not load from " + PATH + ANSI_CYAN +
                                        "\ncreating new game instead" +
                                        ANSI_RESET);
-                    board = new C4Board();
+                    board = new C4Game();
                 }
             }
             case ('q') -> {
@@ -58,7 +58,11 @@ public class Main
 
         while (!board.isOver())
         {
-            C4Board.C4Player player = board.getCurrentPlayer();
+            while (board.isEmpty() && board.getCurrentPlayer().getColor() != board.getPlayers()[0].getColor())
+            {
+                board.switchPlayer();
+            }
+            C4Game.C4Player player = board.getCurrentPlayer();
             board.displayBoard();
             int chosenMove = player.chooseMove();
             if (chosenMove < 0)
@@ -81,7 +85,7 @@ public class Main
                     case (LOAD_CODE) -> {
                         try
                         {
-                            board = new C4Board(PATH);
+                            board = new C4Game(PATH);
                         } catch (Exception e)
                         {
                             System.out.println(ANSI_RED + e);
@@ -95,8 +99,7 @@ public class Main
                     default -> throw new RuntimeException("chooseMove failed to return a valid signal or column index");
                 }
             }
-            /*else*/
-            if (chosenMove >= 0)
+            else // player chose a move above 0
             {
                 board.registerMove(chosenMove);
 
@@ -118,30 +121,25 @@ public class Main
                         input = scanner.next().charAt(0);
                         scanner.nextLine(); // purge scanner's buffer, including the leftover '\n'
                     }
-                }
-                if (board.isOver())
-                {
                     switch (input)
                     {
-                        case ('y'):
-                            board = new C4Board();
-                            break;
-                        case ('l'):
+                        case ('y') -> board = new C4Game();
+
+                        case ('l') -> {
                             try
                             {
-                                board = new C4Board(PATH);
+                                board = new C4Game(PATH);
                             } catch (Exception ignored)
                             {
                                 System.out.println(ANSI_PURPLE +
                                                    "could not load from " + PATH + ANSI_CYAN +
                                                    "\ncreating new game instead" +
                                                    ANSI_RESET);
-                                board = new C4Board();
+                                board = new C4Game();
                             }
-                            break;
+                        }
                     }
                 }
-                /*else*/
                 if (!board.isOver())
                 {
                     board.switchPlayer();
