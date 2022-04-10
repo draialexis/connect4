@@ -22,9 +22,9 @@ public class C4Game implements Serializable
     private static final int WIN_CONDITION = 4;
 
     //an array of the indices of the topmost free cell of each column
-    private       int[]      topFreeCells = new int[TTL_COLS];
-    private       C4Player[] players      = new C4Player[TTL_PLAYERS];
-    private final Cell[][]   board        = new Cell[TTL_ROWS][TTL_COLS];
+    private int[]      topFreeCells = new int[TTL_COLS];
+    private C4Player[] players      = new C4Player[TTL_PLAYERS];
+    private Cell[][]   board        = new Cell[TTL_ROWS][TTL_COLS];
 
     private int      tokensLeft;
     private boolean  isWon;
@@ -56,14 +56,15 @@ public class C4Game implements Serializable
 
         Cell[][] loadedBoard = loaded.getBoard();
         this.resetBoard();
-        for (int i = 0; i < TTL_ROWS; i++)
-        {
-            for (int j = 0; j < TTL_COLS; j++)
-            {
-                this.board[i][j].color = loadedBoard[i][j].getColor();
-                this.board[i][j].neighbors.putAll(loadedBoard[i][j].getAllNeighbors());
-            }
-        }
+        //        for (int i = 0; i < TTL_ROWS; i++)
+        //        {
+        //            for (int j = 0; j < TTL_COLS; j++)
+        //            {
+        //                this.board[i][j].color = loadedBoard[i][j].getColor();
+        //                this.board[i][j].neighbors.putAll(loadedBoard[i][j].getAllNeighbors());
+        //            }
+        //        }
+        this.board = loadedBoard;
         displayBoard();
     }
 
