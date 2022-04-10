@@ -119,7 +119,10 @@ public class Main
                     }
                     switch (input)
                     {
-                        case ('y') -> game = new C4Game();
+                        case ('y') -> {
+                            game = new C4Game();
+                            input = 0;
+                        }
 
                         case ('l') -> {
                             try
@@ -133,10 +136,11 @@ public class Main
                                                    ANSI_RESET);
                                 game = new C4Game();
                             }
+                            input = 0;
                         }
                     }
                 }
-                if (!game.isOver() && input != 'y' && input != 'l')
+                if (!game.isOver() && input != 'l')
                 {
                     game.switchPlayer();
                 }
