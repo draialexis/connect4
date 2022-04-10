@@ -1,8 +1,17 @@
 package com.alexisdrai.connect4;
 
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
+import java.io.Serial;
+import java.io.Serializable;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.Objects;
+import java.util.Scanner;
 
 import static com.alexisdrai.util.Misc.*;
 
