@@ -15,7 +15,7 @@ public class Main
         System.out.println("Welcome to my Connect4 prototype!");
 
         char   input = 0;
-        C4Game game = null;
+        C4Game game  = null;
 
         while (!(input == 'n' || input == 'l' || input == 'q'))
         {
@@ -136,7 +136,7 @@ public class Main
                         }
                     }
                 }
-                if (!game.isOver())
+                if (!game.isOver() && input != 'y' && input != 'l')
                 {
                     game.switchPlayer();
                 }
