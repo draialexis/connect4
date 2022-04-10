@@ -58,10 +58,6 @@ public class Main
 
         while (!board.isOver())
         {
-            while (board.isEmpty() && board.getCurrentPlayer().getColor() != board.getPlayers()[0].getColor())
-            {
-                board.switchPlayer();
-            }
             C4Game.C4Player player = board.getCurrentPlayer();
             board.displayBoard();
             int chosenMove = player.chooseMove();

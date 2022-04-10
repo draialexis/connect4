@@ -207,21 +207,8 @@ public class C4Game implements Serializable
         }
     }
 
-    //TODO deal
     C4Player getCurrentPlayer()
     {
-        //        if (this.currentPlayer.getClass() == C4Player.class)
-        //        {
-        //            return new C4Player(this.currentPlayer.getName(), this.currentPlayer.getColor());
-        //        }
-        //        else
-        //        {
-        //            if (this.currentPlayer.getClass() != C4Player_CPU.class)
-        //            {
-        //                throw new RuntimeException("Player is neither C4Player_CPU nor C4Player");
-        //            }
-        //            return new C4Player_CPU(this.currentPlayer.getName(), this.currentPlayer.getColor());
-        //        }
         return this.currentPlayer;
     }
 
@@ -230,56 +217,24 @@ public class C4Game implements Serializable
         this.currentPlayer = currentPlayer;
     }
 
-    //TODO deal
     Cell[][] getBoard()
     {
-        //        Cell[][] res = new Cell[TTL_ROWS][TTL_COLS];
-        //        for (int i = 0; i < TTL_ROWS; i++)
-        //        {
-        //            res[i] = Arrays.copyOf(this.board[i], TTL_COLS);
-        //        }
-        //        return res;
         return this.board;
     }
 
-    //TODO deal
     int[] getTopFreeCells()
     {
-        return Arrays.copyOf(this.topFreeCells, TTL_COLS);
+        return this.topFreeCells;
     }
 
-    //TODO deal
     C4Player[] getPlayers()
     {
-        C4Player[] res = new C4Player[TTL_PLAYERS];
-        for (int i = 0; i < TTL_PLAYERS; i++)
-        {
-            C4Player player;
-            if (this.players[i].getClass() == C4Player.class)
-            {
-                player = new C4Player(this.players[i].getName(), this.players[i].getColor());
-            }
-            else
-            {
-                if (this.players[i].getClass() != C4Player_CPU.class)
-                {
-                    throw new RuntimeException("Player is neither C4Player_CPU nor C4Player");
-                }
-                player = new C4Player_CPU(this.players[i].getName(), this.players[i].getColor());
-            }
-            res[i] = player;
-        }
-        return res;
+        return this.players;
     }
 
     private boolean isFull()
     {
         return this.isFull;
-    }
-
-    public boolean isEmpty()
-    {
-        return this.getTokensLeft() == TTL_ROWS * TTL_COLS;
     }
 
     void updateFull()
@@ -345,6 +300,7 @@ public class C4Game implements Serializable
             for (int j = 0; j < TTL_COLS; j++)
             {
                 Color color = this.board[i][j].getColor();
+                // nice to have: account for more players, later down the line?
                 if (color == null)
                 {
                     cellStr = ANSI_RESET + "0";
@@ -558,8 +514,6 @@ public class C4Game implements Serializable
         {
             this.color = null;
         }
-
-        //TODO deal
 
         /**
          * <strong>may return <code>null</code></strong>
